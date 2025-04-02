@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visualizador de Imagem</title>
+  <link rel="stylesheet" href="global.css">
+  <style>
+    :root {
+      --primary-color: #00c4ff;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #fff; }
+    .image-container { flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
+    img { width: 100%; height: 100%; object-fit: contain; } /* Padrão: ajustar proporcionalmente */
+    .controls { 
+      position: fixed; 
+      bottom: 0; 
+      left: 0; 
+      right: 0; 
+      background: rgba(0,0,0,0.8); 
+      color: #fff; 
+      padding: 8px; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      gap: 12px; 
+      opacity: 0; 
+      transition: opacity 0.3s; 
+      z-index: 1000; 
+    }
+    .image-container:hover .controls { opacity: 1; }
+    button { background: none; border: none; color: #fff; font-size: 16px; cursor: pointer; padding: 12px; min-width: 48px; min-height: 48px; }
+    button:hover { color: var(--primary-color); }
+    #error { font-size: 20px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="image-container">
+    <img id="imageViewer" src="">
+    <div class="controls">
+      <button id="fitToggle" title="Ajustar/Preencher">↔</button>
+      <button id="fullscreen" title="Tela Cheia">🖥️</button>
+      <button id="close" title="Fechar">✕</button>
+    </div>
+    <div id="error" style="display: none;"></div>
+  </div>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const imagePath = params.get('path');
+    const image = document.getElementById('imageViewer');
+    const fitToggle = document.getElementById('fitToggle');
+    const fullscreen = document.getElementById('fullscreen');
+    const close = document.getElementById('close');
+    const error = document.getElementById('error');
+
+    image.src = `file://${imagePath}`;
+
+    image.addEventListener('error', () => {
+      console.error('Erro ao carregar imagem:', imagePath);
+      error.style.display = 'block';
+      error.textContent = 'Erro ao carregar imagem';
+    });
+
+    fitToggle.addEventListener('click', () => {
+      image.style.objectFit = image.style.objectFit === 'contain' ? 'fill' : 'contain';
+      fitToggle.textContent = image.style.objectFit === 'contain' ? '↔' : '↕';
+    });
+    fitToggle.addEventListener('touchstart', () => {
+      image.style.objectFit = image.style.objectFit === 'contain' ? 'fill' : 'contain';
+      fitToggle.textContent = image.style.objectFit === 'contain' ? '↔' : '↕';
+    });
+
+    fullscreen.addEventListener('click', () => {
+      const win = require('electron').remote.getCurrentWindow();
+      win.setFullScreen(!win.isFullScreen());
+      console.log('Toggling fullscreen');
+    });
+    fullscreen.addEventListener('touchstart', () => {
+      const win = require('electron').remote.getCurrentWindow();
+      win.setFullScreen(!win.isFullScreen());
+      console.log('Toggling fullscreen');
+    });
+
+    close.addEventListener('click', () => {
+      console.log('Closing image viewer');
+      window.close();
+    });
+    close.addEventListener('touchstart', () => {
+      console.log('Closing image viewer');
+      window.close();
+    });
+
+    const container = document.querySelector('.image-container');
+    container.addEventListener('mousemove', (e) => {
+      const controls = document.querySelector('.controls');
+      const rect = container.getBoundingClientRect();
+      const mouseY = e.clientY - rect.top;
+      if (mouseY > rect.height - 50) {
+        controls.style.opacity = '1';
+      } else {
+        controls.style.opacity = '0';
+      }
+    });
+
+    container.addEventListener('touchstart', () => {
+      const controls = document.querySelector('.controls');
+      controls.style.opacity = controls.style.opacity === '1' ? '0' : '1';
+    });
+  </script>
+</body>
+</html>

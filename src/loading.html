@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading Screen</title>
+  <style>
+    body { 
+      margin: 0; 
+      background: transparent; /* Fundo transparente */
+      height: 100vh; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+    }
+    img { 
+      width: 100%; 
+      height: 100%; 
+      object-fit: contain; /* Mantém proporções do GIF */
+    }
+  </style>
+</head>
+<body>
+  <img src="../img/splash.gif" alt="Carregando...">
+  <script>
+    console.log('Loading screen displayed');
+  </script>
+</body>
+</html>

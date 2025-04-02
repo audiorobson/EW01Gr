@@ -1,0 +1,100 @@
+<html><head><base href="https://www.easywall.com.br"><title>Ativcreator</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Futura:wght@400;500;700&display=swap');
+
+  body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Futura', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #1e1e1e;
+    color: #6650ed;
+  }
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  #toolbar {
+    background-color: #2d2d2d;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  }
+  #editor {
+    flex-grow: 1;
+    border: none;
+  }
+  .logo-container {
+    display: flex;
+    align-items: center;
+  }
+  .logo-icon {
+    width: 72.6px; /* Increased by 10% from 66px */
+    height: 48.4px; /* Increased by 10% from 44px */
+    margin-left: 15px; /* Changed from margin-right to margin-left */
+  }
+  h1 {
+    margin: 0;
+    font-size: 31.68px; /* Increased by 20% from 26.4px */
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    color: #6650ed;
+  }
+  .copyright-text {
+    font-size: 12px;
+    color: #6650ed;
+    text-align: right;
+    display: flex;
+    align-items: center;
+  }
+  .btn {
+    padding: 10px 20px;
+    background-color: #ffd700;
+    color: #1e1e1e;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: bold;
+    border-radius: 5px;
+    text-transform: uppercase;
+    font-size: 14px;
+  }
+  .btn:hover {
+    background-color: #ffec8b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255,215,0,0.3);
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="toolbar">
+    <h1>Ativcreator</h1>
+    <div class="copyright-text">
+      Ativcreator - www.ativpro.com<br>
+      Direitos reservados - 2024
+      <img src="https://easywall.com.br/app/img/logo.png" alt="Ativ logo" class="logo-icon">
+    </div>
+  </div>
+  <iframe id="editor" src="https://studio.polotno.com/" width="100%" height="100%"></iframe>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', (event) => {
+  const editor = document.getElementById('editor');
+
+  // You can add more functionality here if needed in the future
+  
+  window.addEventListener('message', (event) => {
+    if (event.origin !== 'https://studio.polotno.com') return;
+
+    // Handle any messages from the Polotno Studio if needed
+  });
+});
+</script>
+</body></html>

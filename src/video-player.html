@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reprodutor de Vídeo</title>
+  <link rel="stylesheet" href="global.css">
+  <style>
+    :root {
+      --primary-color: #00c4ff;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #fff; }
+    .video-container { flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
+    video { width: 100%; height: 100%; object-fit: contain; } /* Padrão: ajustar proporcionalmente */
+    .controls { 
+      position: fixed; 
+      bottom: 0; 
+      left: 0; 
+      right: 0; 
+      background: rgba(0,0,0,0.8); 
+      color: #fff; 
+      padding: 8px; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      gap: 12px; 
+      opacity: 0; 
+      transition: opacity 0.3s; 
+      z-index: 1000; 
+    }
+    .video-container:hover .controls { opacity: 1; }
+    button { background: none; border: none; color: #fff; font-size: 16px; cursor: pointer; padding: 12px; min-width: 48px; min-height: 48px; }
+    button:hover { color: var(--primary-color); }
+    #error { font-size: 20px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="video-container">
+    <video id="videoPlayer" preload="auto" autoplay></video>
+    <div class="controls">
+      <button id="playPause" title="Play/Pause">▶</button>
+      <button id="mute" title="Mute/Unmute">🔊</button>
+      <button id="fitToggle" title="Ajustar/Preencher">↔</button>
+      <button id="fullscreen" title="Tela Cheia">🖥️</button>
+      <button id="close" title="Fechar">✕</button>
+    </div>
+    <div id="error" style="display: none;"></div>
+  </div>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const videoPath = params.get('path');
+    const loop = params.get('loop') === 'true';
+    const video = document.getElementById('videoPlayer');
+    const playPause = document.getElementById('playPause');
+    const mute = document.getElementById('mute');
+    const fitToggle = document.getElementById('fitToggle');
+    const fullscreen = document.getElementById('fullscreen');
+    const close = document.getElementById('close');
+    const error = document.getElementById('error');
+
+    video.src = `file://${videoPath}`;
+    video.loop = loop;
+
+    video.addEventListener('loadedmetadata', () => {
+      video.play().catch(err => {
+        console.error('Erro ao reproduzir vídeo:', err);
+        error.style.display = 'block';
+        error.textContent = 'Erro ao reproduzir vídeo: ' + err.message;
+      });
+    });
+
+    video.addEventListener('error', () => {
+      console.error('Erro ao carregar vídeo:', videoPath);
+      error.style.display = 'block';
+      error.textContent = 'Erro ao carregar vídeo';
+    });
+
+    playPause.addEventListener('click', () => {
+      if (video.paused) {
+        video.play();
+        playPause.textContent = '❚❚';
+      } else {
+        video.pause();
+        playPause.textContent = '▶';
+      }
+    });
+    playPause.addEventListener('touchstart', () => {
+      if (video.paused) {
+        video.play();
+        playPause.textContent = '❚❚';
+      } else {
+        video.pause();
+        playPause.textContent = '▶';
+      }
+    });
+
+    mute.addEventListener('click', () => {
+      video.muted = !video.muted;
+      mute.textContent = video.muted ? '🔇' : '🔊';
+    });
+    mute.addEventListener('touchstart', () => {
+      video.muted = !video.muted;
+      mute.textContent = video.muted ? '🔇' : '🔊';
+    });
+
+    fitToggle.addEventListener('click', () => {
+      video.style.objectFit = video.style.objectFit === 'contain' ? 'fill' : 'contain';
+      fitToggle.textContent = video.style.objectFit === 'contain' ? '↔' : '↕';
+    });
+    fitToggle.addEventListener('touchstart', () => {
+      video.style.objectFit = video.style.objectFit === 'contain' ? 'fill' : 'contain';
+      fitToggle.textContent = video.style.objectFit === 'contain' ? '↔' : '↕';
+    });
+
+    fullscreen.addEventListener('click', () => {
+      const win = require('electron').remote.getCurrentWindow();
+      win.setFullScreen(!win.isFullScreen());
+      console.log('Toggling fullscreen');
+    });
+    fullscreen.addEventListener('touchstart', () => {
+      const win = require('electron').remote.getCurrentWindow();
+      win.setFullScreen(!win.isFullScreen());
+      console.log('Toggling fullscreen');
+    });
+
+    close.addEventListener('click', () => {
+      console.log('Closing video player');
+      window.close();
+    });
+    close.addEventListener('touchstart', () => {
+      console.log('Closing video player');
+      window.close();
+    });
+
+    const container = document.querySelector('.video-container');
+    container.addEventListener('mousemove', (e) => {
+      const controls = document.querySelector('.controls');
+      const rect = container.getBoundingClientRect();
+      const mouseY = e.clientY - rect.top;
+      if (mouseY > rect.height - 50) {
+        controls.style.opacity = '1';
+      } else {
+        controls.style.opacity = '0';
+      }
+    });
+
+    container.addEventListener('touchstart', () => {
+      const controls = document.querySelector('.controls');
+      controls.style.opacity = controls.style.opacity === '1' ? '0' : '1';
+    });
+  </script>
+</body>
+</html>

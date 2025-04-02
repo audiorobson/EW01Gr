@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ativ Wall Cycle</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display&display=swap');
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'SF Pro Display', sans-serif;
+            overflow: hidden;
+            background-color: #1C1C1E;
+            color: #D1D1D6;
+        }
+        .container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #2C2C2E;
+            transition: transform 0.3s ease-in-out;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        .container.hidden {
+            transform: translateY(-100%);
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            border-radius: 0 0 10px 10px;
+        }
+        .left-column {
+            width: 60%;
+            padding-right: 30px;
+        }
+        .right-column {
+            width: 40%;
+            display: flex;
+            flex-direction: column;
+        }
+        .right-column .section {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        .right-column .button-group {
+            margin-top: 30px;
+        }
+        h1, h2 {
+            color: #D1D1D6;
+            text-align: center;
+            margin-top: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        #itemList {
+            list-style-type: none;
+            padding: 0;
+        }
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #3A3A3E;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+            cursor: move;
+        }
+        .item:hover {
+            background-color: #48484A;
+        }
+        .item.dragging {
+            opacity: 0.5;
+        }
+        input[type="text"], input[type="number"], input[type="range"] {
+            padding: 10px;
+            margin-right: 15px;
+            border: none;
+            border-radius: 6px;
+            background-color: #48484A;
+            color: #D1D1D6;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        input[type="number"] {
+            width: 100px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #0A84FF;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        button:hover {
+            background-color: #007AFF;
+        }
+        #contentFrame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease-in-out;
+        }
+        #contentFrame.fade {
+            opacity: 0;
+        }
+        #toggleInterface {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            background-color: rgba(0,0,0,0.3);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s;
+        }
+        #toggleInterface:hover {
+            background-color: rgba(0,0,0,0.5);
+        }
+        .preview-image {
+            max-width: 120px;
+            max-height: 80px;
+            object-fit: cover;
+            margin-right: 15px;
+            border-radius: 4px;
+        }
+        .section {
+            margin-bottom: 40px;
+            padding: 25px;
+            background-color: #3A3A3E;
+            border-radius: 12px;
+        }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        .checkbox-container label {
+            margin-left: 8px;
+            font-size: 14px;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            min-width: 140px;
+            margin-right: 15px;
+            font-size: 14px;
+        }
+        .preview-container {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
+        }
+        .preview-frame {
+            width: 180px;
+            height: 100px;
+            border: 1px solid #555;
+            overflow: hidden;
+            margin-right: 15px;
+            border-radius: 4px;
+        }
+        .preview-frame iframe {
+            width: 360px;
+            height: 200px;
+            border: none;
+            transform: scale(0.5);
+            transform-origin: 0 0;
+        }
+        #preloadFrame {
+            display: none;
+        }
+        .item-name {
+            font-size: 14px;
+            margin-left: 15px;
+            color: #AEAEB2;
+        }
+        .custom-file-input {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #0A84FF;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .custom-file-input:hover {
+            background-color: #007AFF;
+        }
+        .custom-file-input input[type="file"] {
+            display: none;
+        }
+        #presetList {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        #presetList button {
+            background-color: #48484A;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        #presetList button:hover {
+            background-color: #58585A;
+        }
+        .volume-control {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+        }
+        .volume-control label {
+            margin-right: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <button id="toggleInterface" onclick="toggleInterface()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12h18"></path>
+            <path d="M3 6h18"></path>
+            <path d="M3 18h18"></path>
+        </svg>
+    </button>
+    <div class="container" id="controlsContainer">
+        <div class="controls">
+            <div class="left-column">
+                <h1>Ativ Wall Cycle</h1>
+                <div class="section">
+                    <h2>Adicionar URL</h2>
+                    <div class="input-group">
+                        <label for="urlInput">URL:</label>
+                        <input type="text" id="urlInput" placeholder="Digite a URL">
+                    </div>
+                    <div class="input-group">
+                        <label for="urlTimeInput">Tempo URL (s):</label>
+                        <input type="number" id="urlTimeInput" placeholder="Tempo (segundos)" min="1">
+                    </div>
+                    <button onclick="addUrl()">Adicionar URL</button>
+                </div>
+                <div class="section">
+                    <h2>Adicionar Imagens</h2>
+                    <div class="input-group">
+                        <label for="imageInput">Imagens:</label>
+                        <label class="custom-file-input">
+                            Escolher ficheiros
+                            <input type="file" id="imageInput" accept="image/*" multiple>
+                        </label>
+                    </div>
+                    <div class="input-group">
+                        <label for="imageNameInput">Nome da Imagem:</label>
+                        <input type="text" id="imageNameInput" placeholder="Nome da imagem">
+                    </div>
+                    <div class="input-group">
+                        <label for="imageTimeInput">Tempo Imagens (s):</label>
+                        <input type="number" id="imageTimeInput" placeholder="Tempo (segundos)" min="1">
+                    </div>
+                    <button onclick="addImages()">Adicionar Imagens</button>
+                </div>
+                <div class="section">
+                    <h2>Adicionar Vídeos</h2>
+                    <div class="input-group">
+                        <label for="videoInput">Vídeos:</label>
+                        <label class="custom-file-input">
+                            Escolher ficheiros
+                            <input type="file" id="videoInput" accept="video/*" multiple>
+                        </label>
+                    </div>
+                    <div class="input-group">
+                        <label for="videoNameInput">Nome do Vídeo:</label>
+                        <input type="text" id="videoNameInput" placeholder="Nome do vídeo">
+                    </div>
+                    <div class="input-group">
+                        <label for="videoTimeInput">Tempo Vídeos (s):</label>
+                        <input type="number" id="videoTimeInput" placeholder="Tempo (segundos)" min="1">
+                    </div>
+                    <button onclick="addVideos()">Adicionar Vídeos</button>
+                </div>
+                <div class="section">
+                    <h2>Presets</h2>
+                    <div class="input-group">
+                        <label for="presetNameInput">Nome do Preset:</label>
+                        <input type="text" id="presetNameInput" placeholder="Nome do preset">
+                    </div>
+                    <button onclick="savePreset()">Salvar Preset</button>
+                    <div id="presetList"></div>
+                </div>
+            </div>
+            <div class="right-column">
+                <div class="section">
+                    <h2>Lista de Reprodução</h2>
+                    <ul id="itemList"></ul>
+                </div>
+                <div class="button-group">
+                    <button onclick="startRotation()">Iniciar Rotação</button>
+                    <button onclick="stopRotation()">Parar Rotação</button>
+                </div>
+                <div class="volume-control">
+                    <label for="volumeSlider">Volume:</label>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="100">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="contentFrame"></div>
+    <iframe id="preloadFrame" style="display:none;"></iframe>
+
+    <script>
+        let items = [];
+        let currentIndex = 0;
+        let rotationInterval;
+        let preloadIndex;
+        let presets = [];
+        const itemList = document.getElementById('itemList');
+
+        function addUrl() {
+            const urlInput = document.getElementById('urlInput');
+            const timeInput = document.getElementById('urlTimeInput');
+            const url = urlInput.value.trim();
+            const time = parseInt(timeInput.value);
+
+            if (url && time && time > 0) {
+                items.push({ type: 'url', content: url, time });
+                updateItemList();
+                urlInput.value = '';
+                timeInput.value = '';
+            } else {
+                alert('Por favor, insira uma URL válida e um tempo maior que zero.');
+            }
+        }
+
+        function addImages() {
+            const imageInput = document.getElementById('imageInput');
+            const timeInput = document.getElementById('imageTimeInput');
+            const nameInput = document.getElementById('imageNameInput');
+            const time = parseInt(timeInput.value);
+            const name = nameInput.value.trim();
+
+            if (imageInput.files.length > 0 && time && time > 0 && name) {
+                for (let file of imageInput.files) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        items.push({ type: 'image', content: e.target.result, time, stretch: false, name });
+                        updateItemList();
+                    }
+                    reader.readAsDataURL(file);
+                }
+                imageInput.value = '';
+                timeInput.value = '';
+                nameInput.value = '';
+            } else {
+                alert('Por favor, selecione pelo menos uma imagem, defina um tempo maior que zero e um nome.');
+            }
+        }
+
+        function addVideos() {
+            const videoInput = document.getElementById('videoInput');
+            const timeInput = document.getElementById('videoTimeInput');
+            const nameInput = document.getElementById('videoNameInput');
+            const time = parseInt(timeInput.value);
+            const name = nameInput.value.trim();
+
+            if (videoInput.files.length > 0 && time && time > 0 && name) {
+                for (let file of videoInput.files) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        items.push({ type: 'video', content: e.target.result, time, stretch: false, name });
+                        updateItemList();
+                    }
+                    reader.readAsDataURL(file);
+                }
+                videoInput.value = '';
+                timeInput.value = '';
+                nameInput.value = '';
+            } else {
+                alert('Por favor, selecione pelo menos um vídeo, defina um tempo maior que zero e um nome.');
+            }
+        }
+
+        function updateItemList() {
+            const fragment = document.createDocumentFragment();
+            items.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = 'item';
+                li.draggable = true;
+                li.dataset.index = index;
+                let content = '';
+                if (item.type === 'url') {
+                    content = `
+                        <div class="preview-container">
+                            <div class="preview-frame">
+                                <iframe src="${item.content}" title="Preview"></iframe>
+                            </div>
+                            <input type="text" value="${item.content}" onchange="editItem(${index}, this.value, 'content')">
+                        </div>
+                    `;
+                } else if (item.type === 'image') {
+                    content = `
+                        <img src="${item.content}" alt="Preview" class="preview-image">
+                        <span class="item-name">${item.name}</span>
+                    `;
+                } else if (item.type === 'video') {
+                    content = `
+                        <video src="${item.content}" class="preview-image" muted></video>
+                        <span class="item-name">${item.name}</span>
+                    `;
+                }
+                li.innerHTML = `
+                    ${content}
+                    <input type="number" value="${item.time}" onchange="editItem(${index}, this.value, 'time')" min="1" max="999">
+                    ${(item.type === 'image' || item.type === 'video') ? `
+                        <div class="checkbox-container">
+                            <input type="checkbox" id="stretch${index}" ${item.stretch ? 'checked' : ''} onchange="editItem(${index}, this.checked, 'stretch')">
+                            <label for="stretch${index}">Esticar</label>
+                        </div>
+                    ` : ''}
+                    <button onclick="removeItem(${index})">Remover</button>
+                `;
+                fragment.appendChild(li);
+            });
+            itemList.innerHTML = '';
+            itemList.appendChild(fragment);
+        }
+
+        function editItem(index, value, field) {
+            if (field === 'content' && items[index].type === 'url') {
+                items[index].content = value.trim();
+            } else if (field === 'time') {
+                const time = parseInt(value);
+                if (time > 0) {
+                    items[index].time = time;
+                } else {
+                    alert('O tempo deve ser maior que zero.');
+                    updateItemList();
+                }
+            } else if (field === 'stretch') {
+                items[index].stretch = value;
+            }
+            updateItemList();
+        }
+
+        function removeItem(index) {
+            items.splice(index, 1);
+            updateItemList();
+        }
+
+        function startRotation() {
+            if (items.length === 0) {
+                alert('Adicione pelo menos um item antes de iniciar a rotação.');
+                return;
+            }
+            stopRotation();
+            currentIndex = 0;
+            preloadIndex = 1 % items.length;
+            rotateItem();
+            preloadNextItem();
+            scheduleNextRotation();
+            toggleInterface();
+        }
+
+        function stopRotation() {
+            clearTimeout(rotationInterval);
+        }
+
+        function rotateItem() {
+            if (items.length === 0) return;
+            const contentFrame = document.getElementById('contentFrame');
+            const item = items[currentIndex];
+
+            contentFrame.classList.add('fade');
+            setTimeout(() => {
+                if (item.type === 'url') {
+                    contentFrame.innerHTML = `<iframe src="${item.content}" style="width:100%;height:100%;border:none;"></iframe>`;
+                } else if (item.type === 'image') {
+                    const objectFit = item.stretch ? 'cover' : 'contain';
+                    contentFrame.innerHTML = `<img src="${item.content}" style="width:100%;height:100%;object-fit:${objectFit};" alt="Imagem">`;
+                } else if (item.type === 'video') {
+                    const objectFit = item.stretch ? 'cover' : 'contain';
+                    contentFrame.innerHTML = `<video src="${item.content}" style="width:100%;height:100%;object-fit:${objectFit};" autoplay loop muted></video>`;
+                    const video = contentFrame.querySelector('video');
+                    video.volume = document.getElementById('volumeSlider').value / 100;
+                }
+                contentFrame.classList.remove('fade');
+            }, 300);
+
+            currentIndex = (currentIndex + 1) % items.length;
+            preloadIndex = (preloadIndex + 1) % items.length;
+            preloadNextItem();
+            scheduleNextRotation();
+        }
+
+        function preloadNextItem() {
+            const preloadFrame = document.getElementById('preloadFrame');
+            const nextItem = items[preloadIndex];
+            if (nextItem && nextItem.type === 'url') {
+                preloadFrame.src = nextItem.content;
+            }
+        }
+
+        function scheduleNextRotation() {
+            clearTimeout(rotationInterval);
+            if (items.length > 0 && items[currentIndex]) {
+                rotationInterval = setTimeout(rotateItem, items[currentIndex].time * 1000);
+            }
+        }
+
+        function toggleInterface() {
+            const container = document.getElementById('controlsContainer');
+            container.classList.toggle('hidden');
+        }
+
+        function savePreset() {
+            const presetName = document.getElementById('presetNameInput').value.trim();
+            if (presetName && items.length > 0) {
+                presets.push({ name: presetName, items: JSON.parse(JSON.stringify(items)) });
+                updatePresetList();
+                document.getElementById('presetNameInput').value = '';
+            } else {
+                alert('Insira um nome para o preset e adicione itens à lista.');
+            }
+        }
+
+        function updatePresetList() {
+            const presetList = document.getElementById('presetList');
+            presetList.innerHTML = '';
+            presets.forEach((preset, index) => {
+                const button = document.createElement('button');
+                button.textContent = preset.name;
+                button.onclick = () => loadPreset(index);
+                presetList.appendChild(button);
+            });
+        }
+
+        function loadPreset(index) {
+            items = JSON.parse(JSON.stringify(presets[index].items));
+            updateItemList();
+        }
+
+        // Drag and Drop
+        itemList.addEventListener('dragstart', (e) => {
+            if (e.target.classList.contains('item')) {
+                e.target.classList.add('dragging');
+            }
+        });
+        itemList.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const dragging = document.querySelector('.dragging');
+            const afterElement = getDragAfterElement(itemList, e.clientY);
+            if (afterElement == null) {
+                itemList.appendChild(dragging);
+            } else {
+                itemList.insertBefore(dragging, afterElement);
+            }
+        });
+        itemList.addEventListener('dragend', (e) => {
+            e.target.classList.remove('dragging');
+            const newOrder = Array.from(itemList.children).map(li => parseInt(li.dataset.index));
+            items = newOrder.map(index => items[index]);
+            updateItemList();
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.item:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                }
+                return closest;
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        // Volume Control
+        document.getElementById('volumeSlider').addEventListener('input', (e) => {
+            const volume = e.target.value / 100;
+            const videos = document.querySelectorAll('#contentFrame video');
+            videos.forEach(video => video.volume = volume);
+        });
+
+        // Inicialização
+        document.getElementById('toggleInterface').style.opacity = '0.85';
+    </script>
+</body>
+</html>

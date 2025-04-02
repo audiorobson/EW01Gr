@@ -1,0 +1,858 @@
+<html><head><base href="https://websim.creation.engine/"><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Multi-Window Viewer App - Dark Mode</title><link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap');
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Quicksand', Arial, sans-serif;
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+#app-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    background-color: #1e1e1e;
+    overflow: hidden;
+}
+
+#window-area {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    gap: 0px;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+.window {
+    background-color: #2c2c2c;
+    border: 1px solid #444;
+    box-shadow: 0 0 10px rgba(255,255,255,0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.window.selected {
+    border: 1px solid #ffd700;
+}
+
+.window-content {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.window-content iframe,
+.window-content img,
+.window-content video,
+.window-content canvas,
+.window-content #mapid {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.window-content img.stretched,
+.window-content video.stretched {
+    object-fit: cover;
+}
+
+.display-mode {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 3px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    z-index: 10;
+}
+
+.display-mode label {
+    margin-left: 5px;
+    margin-right: 10px;
+    font-size: 12px;
+    color: #e0e0e0;
+}
+
+.maximize-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: rgba(255, 215, 0, 0.3);
+    color: #e0e0e0;
+    border: none;
+    border-radius: 3px;
+    padding: 2px 5px;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+}
+
+.maximize-btn:hover {
+    background-color: rgba(255, 215, 0, 0.8);
+    color: #121212;
+}
+
+.window.maximized {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    z-index: 1000;
+}
+
+#overlay-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: rgba(0,0,0,0.9);
+    color: #e0e0e0;
+    padding: 20px;
+    transition: transform 0.3s ease-in-out;
+    transform: translateY(-100%);
+    z-index: 1000;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+#overlay-menu.visible {
+    transform: translateY(0);
+}
+
+.menu-card {
+    background-color: #2c2c2c;
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: border 0.3s ease;
+}
+
+.menu-card:hover {
+    border: 1px solid #ffd700;
+}
+
+.menu-card h3 {
+    color: #ffd700;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.menu-button, .config-input {
+    background-color: #ffd700;
+    border: none;
+    color: #121212;
+    padding: 9px 18px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 10px;
+    padding: 7px 14px;
+    margin: 4px 2px;
+    cursor: pointer;
+    border-radius: 25px;
+    font-family: 'Quicksand', Arial, sans-serif;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.menu-button:hover, .config-input:hover {
+    background-color: #ffea00;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(255,255,255,0.1);
+    color: #000000; 
+}
+
+.config-input {
+    background-color: #3a3a3a;
+    color: #e0e0e0;
+    width: 60px;
+    text-align: center;
+}
+
+.display-mode input[type="checkbox"] {
+    transform: scale(0.7);
+}
+
+#grid-config {
+    margin-top: 0;
+}
+
+#myChart {
+    background-color: #2c2c2c;
+    border-radius: 8px;
+    padding: 10px;
+}
+
+.leaflet-container {
+    background-color: #2c2c2c;
+}
+
+input:hover, select:hover {
+    background-color: #ffea00;
+    color: #000000;
+}
+
+#logo-space {
+    height: 50px;
+    margin-bottom: 10px;
+}
+
+#copyright-text {
+    font-size: 12px;
+    color: #888;
+    margin-top: 10px;
+    text-align: center;
+}
+
+.discreet-btn {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background-color: rgba(255, 215, 0, 0.3);
+    color: #e0e0e0;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 1001;
+    transition: all 0.3s ease;
+}
+
+.discreet-btn:hover {
+    background-color: rgba(255, 215, 0, 0.8);
+    color: #121212;
+}
+
+.menu-button.delete-all {
+    background-color: #ff4136;
+    color: white;
+}
+
+.menu-button.delete-all:hover {
+    background-color: #ff7066;
+}
+
+.menu-button.load-preset {
+    background-color: #0074D9;
+    color: white;
+}
+
+.menu-button.load-preset:hover {
+    background-color: #4192D9;
+}
+</style></head><body>
+<div id="app-container">
+    <div id="window-area"></div>
+    <div id="overlay-menu">
+        <div id="logo-space">
+            <img src="https://websim.creation.engine/ativ-logo.png" alt="Ativ Software Logo" style="max-height: 100%; max-width: 100%;">
+        </div>
+        <h2 style="color: #ffd700; margin-bottom: 20px;">Ativ Mosaic</h2>
+        <div id="copyright-text">Ativ Software - Direitos reservados - www.ativpro.com</div>
+        
+        <div class="menu-card">
+            <h3>Criar Janela</h3>
+            <button class="menu-button" onclick="createWindow('url')">URL</button>
+            <button class="menu-button" onclick="createWindow('image')">Imagem</button>
+            <button class="menu-button" onclick="createWindow('video')">Vídeo</button>
+            <button class="menu-button" onclick="createWindow('chart')">Gráfico</button>
+            <button class="menu-button" onclick="createWindow('map')">Mapa</button>
+            <button class="menu-button" onclick="createWindow('document')">Documento</button>
+            <button class="menu-button delete-all" onclick="deleteAllWindows()">Deletar Todas as Janelas</button>
+        </div>
+        
+        <div class="menu-card">
+            <h3>Configuração de Grid</h3>
+            <div id="grid-config">
+                Grid: 
+                <input type="number" id="grid-x" class="config-input" value="2" min="1" max="10">
+                x
+                <input type="number" id="grid-y" class="config-input" value="2" min="1" max="10">
+                <button class="menu-button" onclick="updateGrid()">Atualizar Grid</button>
+            </div>
+            <div id="auto-switch-controls">
+                <input type="number" id="switch-interval-minutes" class="config-input" value="0" min="0" style="width: 60px;">
+                <label for="switch-interval-minutes">minutos</label>
+                <input type="number" id="switch-interval-seconds" class="config-input" value="5" min="0" style="width: 60px;">
+                <label for="switch-interval-seconds">segundos</label>
+                <button class="menu-button" id="start-auto-switch" onclick="toggleAutoSwitch()">Iniciar Troca Automática</button>
+            </div>
+        </div>
+        
+        <div class="menu-card">
+            <h3>Presets</h3>
+            <div id="preset-controls">
+                <input type="text" id="preset-name" placeholder="Nome do Preset" class="config-input" style="width: 150px;">
+                <input type="text" id="preset-shortcut" placeholder="Tecla de atalho" class="config-input" style="width: 50px;" maxlength="1">
+                <button class="menu-button" onclick="savePreset()">Salvar Preset</button>
+                <select id="preset-list" class="config-input load-preset" style="width: 150px;">
+                    <option value="">Selecionar Preset</option>
+                </select>
+                <button class="menu-button load-preset" onclick="loadSelectedPreset()">Carregar Preset</button>
+            </div>
+            <div id="preset-selection">
+                <h3>Selecionar Presets para Reprodução Automática:</h3>
+                <div id="preset-checkboxes"></div>
+            </div>
+        </div>
+        
+        <button class="menu-button" onclick="toggleFullscreen()">Entrar/Sair Fullscreen</button>
+    </div>
+    <button id="menu-toggle-btn" class="discreet-btn">Menu</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css">
+
+<script>
+let menuVisible = false;
+let windows = [];
+let presets = {};
+let autoSwitchInterval;
+let currentPresetIndex = 0;
+let selectedWindow = null;
+
+function toggleMenu() {
+    const menu = document.getElementById('overlay-menu');
+    menuVisible = !menuVisible;
+    menu.classList.toggle('visible', menuVisible);
+}
+
+document.getElementById('menu-toggle-btn').onclick = toggleMenu;
+
+document.addEventListener('keydown', (event) => {
+    if (event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) {
+        const key = event.key.toUpperCase();
+        Object.entries(presets).forEach(([name, preset]) => {
+            if (preset.shortcutKey === key) {
+                loadPreset(name);
+                event.preventDefault();
+            }
+        });
+    }
+    if (event.shiftKey && event.key >= '1' && event.key <= '9') {
+        const presetIndex = parseInt(event.key) - 1;
+        const presetName = Object.keys(presets)[presetIndex];
+        if (presetName) {
+            loadPreset(presetName);
+        }
+    }
+    if (event.shiftKey && event.key.toLowerCase() === 'z' && selectedWindow) {
+        toggleMaximize(selectedWindow);
+    }
+    if (event.ctrlKey && event.key.toLowerCase() === 'a') {
+        event.preventDefault();
+        toggleMenu();
+    }
+});
+
+function updateGrid() {
+    const gridX = document.getElementById('grid-x').value;
+    const gridY = document.getElementById('grid-y').value;
+    const windowArea = document.getElementById('window-area');
+
+    windowArea.style.gridTemplateColumns = `repeat(${gridX}, 1fr)`;
+    windowArea.style.gridTemplateRows = `repeat(${gridY}, 1fr)`;
+
+    windows.forEach((window, index) => {
+        if (!window.classList.contains('maximized')) {
+            const row = Math.floor(index / gridX) + 1;
+            const col = (index % gridX) + 1;
+            window.style.gridArea = `${row} / ${col} / auto / auto`;
+        }
+    });
+}
+
+function createWindow(type) {
+    const windowArea = document.getElementById('window-area');
+    const newWindow = document.createElement('div');
+    newWindow.className = 'window';
+    newWindow.dataset.type = type;
+
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'window-content';
+
+    const maximizeBtn = document.createElement('button');
+    maximizeBtn.className = 'maximize-btn';
+    maximizeBtn.textContent = '□';
+    maximizeBtn.onclick = () => toggleMaximize(newWindow);
+    newWindow.appendChild(maximizeBtn);
+
+    newWindow.addEventListener('mouseover', () => selectWindow(newWindow));
+    newWindow.addEventListener('click', () => selectWindow(newWindow));
+
+    switch(type) {
+        case 'url':
+            contentDiv.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                    <input type="text" id="url-input-${windows.length}" placeholder="Digite a URL para carregar" style="width: 80%; margin-bottom: 10px; padding: 5px;">
+                    <button onclick="loadURL(${windows.length})" class="menu-button" style="padding: 5px 10px;">Carregar URL</button>
+                </div>
+            `;
+            break;
+        case 'image':
+            contentDiv.innerHTML = '<p>Arraste um arquivo de imagem para cá.</p>';
+            setupImageDragDrop(contentDiv);
+            break;
+        case 'video':
+            contentDiv.innerHTML = '<p>Arraste um arquivo de vídeo para cá.</p>';
+            setupVideoDragDrop(contentDiv);
+            break;
+        case 'chart':
+            contentDiv.innerHTML = '<p>Arraste um arquivo (HTML, PDF, ou outros) para cá.</p>';
+            setupFileDragDrop(contentDiv);
+            break;
+        case 'map':
+            contentDiv.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                    <input type="number" id="lat-input-${windows.length}" placeholder="Latitude" step="any" style="width: 80%; margin-bottom: 10px; padding: 5px;">
+                    <input type="number" id="lng-input-${windows.length}" placeholder="Longitude" step="any" style="width: 80%; margin-bottom: 10px; padding: 5px;">
+                    <button onclick="loadMap(${windows.length})" class="menu-button" style="padding: 5px 10px;">Carregar Mapa</button>
+                </div>
+            `;
+            break;
+        case 'document':
+            contentDiv.innerHTML = '<p>Arraste um arquivo PDF ou de texto para cá.</p>';
+            setupDocumentDragDrop(contentDiv);
+            break;
+    }
+
+    newWindow.appendChild(contentDiv);
+    windows.push(newWindow);
+    windowArea.appendChild(newWindow);
+    updateGrid();
+}
+
+function selectWindow(window) {
+    windows.forEach(w => {
+        w.classList.remove('selected');
+    });
+    window.classList.add('selected');
+    selectedWindow = window;
+}
+
+function toggleMaximize(window) {
+    window.classList.toggle('maximized');
+    const maximizeBtn = window.querySelector('.maximize-btn');
+    if (window.classList.contains('maximized')) {
+        maximizeBtn.textContent = '❐';
+        window.style.gridArea = '1 / 1 / -1 / -1';
+        window.style.zIndex = '1000';
+    } else {
+        maximizeBtn.textContent = '□';
+        window.style.gridArea = '';
+        window.style.zIndex = '';
+        updateGrid(); // Reset the grid layout
+    }
+    selectWindow(window); // Ensure the window remains selected after maximizing/minimizing
+}
+
+function deleteAllWindows() {
+    const windowArea = document.getElementById('window-area');
+    windowArea.innerHTML = '';
+    windows = [];
+}
+
+function loadURL(windowIndex) {
+    const input = document.getElementById(`url-input-${windowIndex}`);
+    const url = input.value.trim();
+    if (url) {
+        const contentDiv = windows[windowIndex].querySelector('.window-content');
+        contentDiv.innerHTML = `<iframe src="${url}" frameborder="0" style="width:100%;height:100%;"></iframe>`;
+    }
+}
+
+function loadMap(windowIndex) {
+    const latInput = document.getElementById(`lat-input-${windowIndex}`);
+    const lngInput = document.getElementById(`lng-input-${windowIndex}`);
+    const lat = parseFloat(latInput.value) || 0;
+    const lng = parseFloat(lngInput.value) || 0;
+    
+    const contentDiv = windows[windowIndex].querySelector('.window-content');
+    contentDiv.innerHTML = '<div id="mapid" style="width:100%;height:100%;"></div>';
+    
+    const map = L.map(contentDiv.querySelector('#mapid')).setView([lat, lng], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+    
+    setTimeout(() => {
+        map.invalidateSize();
+    }, 100);
+}
+
+function setupImageDragDrop(contentDiv) {
+    contentDiv.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'copy';
+    });
+
+    contentDiv.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                loadImage(contentDiv, event.target.result);
+            };
+            reader.readAsDataURL(files[0]);
+        }
+    });
+}
+
+function setupVideoDragDrop(contentDiv) {
+    contentDiv.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'copy';
+    });
+
+    contentDiv.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const files = e.dataTransfer.files;
+        if (files.length > 0 && files[0].type.startsWith('video/')) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                loadVideo(contentDiv, event.target.result);
+            };
+            reader.readAsDataURL(files[0]);
+        }
+    });
+}
+
+function setupFileDragDrop(contentDiv) {
+    contentDiv.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'copy';
+    });
+
+    contentDiv.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleDroppedFile(contentDiv, files[0]);
+        }
+    });
+}
+
+function handleDroppedFile(contentDiv, file) {
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+        const fileContent = event.target.result;
+
+        if (file.type === 'text/html') {
+            contentDiv.innerHTML = `<iframe src="${fileContent}" style="width:100%;height:100%;border:none;"></iframe>`;
+        } else if (file.type === 'application/pdf') {
+            contentDiv.innerHTML = `<embed src="${fileContent}" type="application/pdf" width="100%" height="100%">`;
+        } else if (file.type.startsWith('image/')) {
+            contentDiv.innerHTML = `<img src="${fileContent}" alt="Imagem carregada" style="width:100%;height:100%;object-fit:contain;">`;
+        } else if (file.type.startsWith('video/')) {
+            contentDiv.innerHTML = `
+                <video autoplay loop muted controls style="width:100%;height:100%;object-fit:contain;">
+                    <source src="${fileContent}" type="${file.type}">
+                    Seu navegador não suporta o elemento de vídeo.
+                </video>`;
+        } else {
+            contentDiv.innerHTML = `<p>Tipo de arquivo não suportado: ${file.type}</p>`;
+        }
+    };
+
+    if (file.type === 'text/html' || file.type === 'application/pdf' || file.type.startsWith('image/') || file.type.startsWith('video/')) {
+        reader.readAsDataURL(file);
+    } else {
+        reader.readAsText(file);
+    }
+}
+
+function loadImage(contentDiv, src) {
+    contentDiv.innerHTML = `
+        <img src="${src}" alt="Imagem carregada" style="width:100%;height:100%;object-fit:contain;">
+        <div class="display-mode">
+            <input type="checkbox" id="stretch-${windows.length}" onchange="toggleStretch(this)">
+            <label for="stretch-${windows.length}">Esticar</label>
+            <input type="checkbox" id="cover-${windows.length}" onchange="toggleCover(this)">
+            <label for="cover-${windows.length}">Cobrir</label>
+        </div>
+    `;
+}
+
+function loadVideo(contentDiv, src) {
+    contentDiv.innerHTML = `
+        <video autoplay loop muted controls style="width:100%;height:100%;object-fit:contain;">
+            <source src="${src}" type="video/mp4">
+            Seu navegador não suporta o elemento de vídeo.
+        </video>
+        <div class="display-mode">
+            <input type="checkbox" id="stretch-${windows.length}" onchange="toggleStretch(this)">
+            <label for="stretch-${windows.length}">Esticar</label>
+            <input type="checkbox" id="cover-${windows.length}" onchange="toggleCover(this)">
+            <label for="cover-${windows.length}">Cobrir</label>
+        </div>
+    `;
+}
+
+function toggleCover(checkbox) {
+    const content = checkbox.closest('.window-content').querySelector('img, video');
+    if (content) {
+        content.style.objectFit = checkbox.checked ? 'cover' : 'contain';
+        const stretchCheckbox = checkbox.previousElementSibling.previousElementSibling;
+        if (checkbox.checked) {
+            stretchCheckbox.checked = false;
+            content.classList.remove('stretched');
+        }
+    }
+}
+
+function toggleStretch(checkbox) {
+    const content = checkbox.closest('.window-content').querySelector('img, video');
+    if (content) {
+        content.classList.toggle('stretched', checkbox.checked);
+        const coverCheckbox = checkbox.nextElementSibling.nextElementSibling;
+        if (checkbox.checked) {
+            coverCheckbox.checked = false;
+            content.style.objectFit = 'contain';
+        }
+    }
+}
+
+function savePreset() {
+    const presetName = document.getElementById('preset-name').value;
+    const shortcutKey = document.getElementById('preset-shortcut').value.toUpperCase();
+    if (!presetName) {
+        alert('Por favor, insira um nome para o preset.');
+        return;
+    }
+    if (!shortcutKey || shortcutKey.length !== 1) {
+        alert('Por favor, insira uma única tecla para o atalho.');
+        return;
+    }
+
+    const preset = {
+        windows: windows.map(window => ({
+            type: window.dataset.type,
+            content: window.querySelector('.window-content').innerHTML,
+            stretch: window.querySelector('input[id^="stretch"]')?.checked,
+            cover: window.querySelector('input[id^="cover"]')?.checked,
+            gridArea: window.style.gridArea
+        })),
+        gridX: document.getElementById('grid-x').value,
+        gridY: document.getElementById('grid-y').value,
+        gridTemplateColumns: document.getElementById('window-area').style.gridTemplateColumns,
+        gridTemplateRows: document.getElementById('window-area').style.gridTemplateRows,
+        shortcutKey: shortcutKey
+    };
+
+    presets[presetName] = preset;
+    updatePresetList();
+    alert(`Preset "${presetName}" salvo com sucesso. Atalho: Shift+${shortcutKey}`);
+
+    if (autoSwitchInterval) {
+        toggleAutoSwitch();
+        toggleAutoSwitch();
+    }
+}
+
+function updatePresetList() {
+    const presetList = document.getElementById('preset-list');
+    const presetCheckboxes = document.getElementById('preset-checkboxes');
+    presetList.innerHTML = '<option value="">Selecionar Preset</option>';
+    presetCheckboxes.innerHTML = '';
+    Object.entries(presets).forEach(([name, preset]) => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = `${name} (Shift+${preset.shortcutKey})`;
+        presetList.appendChild(option);
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `preset-check-${name}`;
+        checkbox.value = name;
+        checkbox.checked = true;
+        const label = document.createElement('label');
+        label.htmlFor = `preset-check-${name}`;
+        label.textContent = `${name} (Shift+${preset.shortcutKey})`;
+        presetCheckboxes.appendChild(checkbox);
+        presetCheckboxes.appendChild(label);
+        presetCheckboxes.appendChild(document.createElement('br'));
+    });
+    currentPresetIndex = 0;
+}
+
+function loadSelectedPreset() {
+    const presetName = document.getElementById('preset-list').value;
+    if (presetName) {
+        loadPreset(presetName);
+    }
+}
+
+function loadPreset(presetName) {
+    const preset = presets[presetName];
+    if (!preset) return;
+
+    deleteAllWindows();
+
+    document.getElementById('grid-x').value = preset.gridX;
+    document.getElementById('grid-y').value = preset.gridY;
+    
+    const windowArea = document.getElementById('window-area');
+    windowArea.style.gridTemplateColumns = preset.gridTemplateColumns;
+    windowArea.style.gridTemplateRows = preset.gridTemplateRows;
+
+    preset.windows.forEach(windowData => {
+        const newWindow = document.createElement('div');
+        newWindow.className = 'window';
+        newWindow.dataset.type = windowData.type;
+        newWindow.innerHTML = `
+            <div class="window-content">${windowData.content}</div>
+            <button class="maximize-btn">□</button>
+        `;
+        newWindow.style.gridArea = windowData.gridArea;
+
+        // Add event listeners for selection and maximization
+        newWindow.addEventListener('mouseover', () => selectWindow(newWindow));
+        newWindow.addEventListener('click', () => selectWindow(newWindow));
+        const maximizeBtn = newWindow.querySelector('.maximize-btn');
+        maximizeBtn.onclick = () => toggleMaximize(newWindow);
+
+        if (windowData.stretch) {
+            newWindow.querySelector('input[id^="stretch"]').checked = true;
+            newWindow.querySelector('img, video')?.classList.add('stretched');
+        }
+        if (windowData.cover) {
+            newWindow.querySelector('input[id^="cover"]').checked = true;
+            newWindow.querySelector('img, video').style.objectFit = 'cover';
+        }
+
+        if (windowData.type === 'map') {
+            const mapDiv = newWindow.querySelector('#mapid');
+            if (mapDiv) {
+                setTimeout(() => {
+                    const map = L.map(mapDiv).setView([0, 0], 13);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    }).addTo(map);
+                    map.invalidateSize();
+                }, 100);
+            }
+        }
+
+        windows.push(newWindow);
+        windowArea.appendChild(newWindow);
+    });
+
+    updateGrid();
+}
+
+function toggleAutoSwitch() {
+    const button = document.getElementById('start-auto-switch');
+    if (autoSwitchInterval) {
+        clearInterval(autoSwitchInterval);
+        autoSwitchInterval = null;
+        button.textContent = 'Iniciar Troca Automática';
+    } else {
+        startAutoSwitch();
+        button.textContent = 'Parar Troca Automática';
+    }
+}
+
+function startAutoSwitch() {
+    const minutes = parseInt(document.getElementById('switch-interval-minutes').value);
+    const seconds = parseInt(document.getElementById('switch-interval-seconds').value);
+    const interval = (minutes * 60 + seconds) * 1000;
+    
+    const presetNames = Object.keys(presets).filter(name => 
+        document.getElementById(`preset-check-${name}`).checked
+    );
+
+    if (presetNames.length === 0) {
+        alert('Não há presets selecionados para alternar.');
+        return;
+    }
+
+    autoSwitchInterval = setInterval(() => {
+        loadPreset(presetNames[currentPresetIndex]);
+        currentPresetIndex = (currentPresetIndex + 1) % presetNames.length;
+    }, interval);
+}
+
+function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        }
+    }
+}
+
+function setupDocumentDragDrop(contentDiv) {
+    contentDiv.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'copy';
+    });
+
+    contentDiv.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleDroppedDocument(contentDiv, files[0]);
+        }
+    });
+}
+
+function handleDroppedDocument(contentDiv, file) {
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+        const fileContent = event.target.result;
+
+        if (file.type === 'application/pdf') {
+            contentDiv.innerHTML = `<embed src="${fileContent}" type="application/pdf" width="100%" height="100%">`;
+        } else if (file.type === 'text/plain') {
+            contentDiv.innerHTML = `<pre style="width:100%;height:100%;overflow:auto;white-space:pre-wrap;word-wrap:break-word;">${fileContent}</pre>`;
+        } else {
+            contentDiv.innerHTML = `<p>Tipo de arquivo não suportado: ${file.type}</p>`;
+        }
+    };
+
+    if (file.type === 'application/pdf') {
+        reader.readAsDataURL(file);
+    } else if (file.type === 'text/plain') {
+        reader.readAsText(file);
+    } else {
+        contentDiv.innerHTML = `<p>Tipo de arquivo não suportado: ${file.type}</p>`;
+    }
+}
+
+window.onload = updateGrid;
+</script>
+</body></html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { margin: 0; background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .id-text { font-size: 100px; color: #fff; text-shadow: 2px 2px 5px #000; }
+  </style>
+</head>
+<body>
+  <div class="id-text"><span id="monitorName"></span></div>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    document.getElementById('monitorName').textContent = params.get('name');
+  </script>
+</body>
+</html>

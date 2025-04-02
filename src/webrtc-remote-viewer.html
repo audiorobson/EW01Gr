@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visualizador de WebRTC Remoto</title>
+  <link rel="stylesheet" href="global.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #fff; }
+    .video-container { flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
+    video { width: 100%; height: 100%; object-fit: contain; }
+    .controls { position: absolute; bottom: 10px; left: 0; right: 0; background: rgba(0,0,0,0.8); color: #fff; padding: 8px; display: flex; justify-content: center; align-items: center; gap: 12px; opacity: 0; transition: opacity 0.3s; }
+    .video-container:hover .controls { opacity: 1; }
+    button { background: none; border: none; color: #fff; font-size: 16px; cursor: pointer; }
+    button:hover { color: #00c4ff; }
+    #error { font-size: 20px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="video-container">
+    <video id="remoteVideo" autoplay></video>
+    <div class="controls">
+      <button id="playPause" title="Play/Pause">▶</button>
+      <button id="mute" title="Mute/Unmute">🔊</button>
+      <button id="close" title="Fechar">✕</button>
+    </div>
+    <div id="error" style="display: none;"></div>
+  </div>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const streamPath = params.get('path') || 'desktop';
+    const video = document.getElementById('remoteVideo');
+    const playPause = document.getElementById('playPause');
+    const mute = document.getElementById('mute');
+    const close = document.getElementById('close');
+    const error = document.getElementById('error');
+
+    async function startRemoteStream() {
+      try {
+        console.log('Iniciando visualização de stream remoto:', streamPath);
+        const peerConnection = new RTCPeerConnection({
+          iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        });
+
+        peerConnection.ontrack = (event) => {
+          console.log('Remote stream track received:', event.streams);
+          video.srcObject = event.streams[0];
+          video.onloadedmetadata = () => {
+            console.log('Metadata loaded for remote stream');
+            video.play().catch(err => {
+              console.error('Erro ao reproduzir o vídeo:', err);
+              error.style.display = 'block';
+              error.textContent = 'Erro ao reproduzir o vídeo: ' + err.message;
+            });
+          };
+        };
+
+        const response = await fetch(`http://localhost:8889/${streamPath}/whep`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/sdp'
+          },
+          body: new RTCSessionDescription({
+            type: 'offer',
+            sdp: await createOffer(peerConnection)
+          }).sdp
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao ler o stream via WHEP: ' + response.statusText);
+        }
+
+        const answer = await response.text();
+        await peerConnection.setRemoteDescription(new RTCSessionDescription({
+          type: 'answer',
+          sdp: answer
+        }));
+        console.log('Remote stream successfully connected via WHEP');
+      } catch (err) {
+        console.error('Erro ao visualizar o stream remoto:', err);
+        error.style.display = 'block';
+        error.textContent = 'Erro ao visualizar o stream remoto: ' + err.message;
+      }
+    }
+
+    async function createOffer(peerConnection) {
+      peerConnection.addTransceiver('video', { direction: 'recvonly' });
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+      return offer.sdp;
+    }
+
+    playPause.onclick = () => {
+      if (video.paused) {
+        video.play();
+        playPause.textContent = '❚❚';
+      } else {
+        video.pause();
+        playPause.textContent = '▶';
+      }
+    };
+    mute.onclick = () => {
+      video.muted = !video.muted;
+      mute.textContent = video.muted ? '🔇' : '🔊';
+    };
+    close.onclick = () => {
+      video.srcObject?.getTracks().forEach(track => track.stop());
+      window.close();
+    };
+
+    startRemoteStream();
+  </script>
+</body>
+</html>

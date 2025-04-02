@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <base href=""/>
+    <title>Easy Cell</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            background-color: #1a252f;
+            color: #ecf0f1;
+        }
+
+        #sideMenu {
+            width: 250px;
+            background-color: #1f2c38;
+            color: #ecf0f1;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            transform: translateX(-100%);
+            padding: 20px;
+            transition: transform 0.3s;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        #sideMenu.open {
+            transform: translateX(0);
+        }
+
+        #menuToggle {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+            z-index: 1100;
+            background: none;
+            border: none;
+            opacity: 0.5;
+        }
+
+        #menuToggle::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #ecf0f1;
+        }
+
+        #menuToggle::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #ecf0f1;
+        }
+
+        #menuToggle span {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #ecf0f1;
+            transform: translateY(-50%);
+        }
+
+        #content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            transition: left 0.3s;
+        }
+
+        #gridContainer {
+            display: grid;
+            width: 100%;
+            height: 100vh;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .gridCell {
+            border: 1px solid #34495e;
+            background-color: #2c3e50;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gridCell img,
+        .gridCell video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gridCell.dragover {
+            border: 1px dashed #7df9ff;
+        }
+
+        .selectedCell {
+            border: 2px solid #7df9ff;
+        }
+
+        .resizer {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.2);
+            z-index: 10;
+        }
+
+        .resizer.col-resizer {
+            width: 5px;
+            cursor: col-resize;
+        }
+
+        .resizer.row-resizer {
+            height: 5px;
+            cursor: row-resize;
+        }
+
+        #sideMenu h2 {
+            margin-top: 0;
+        }
+
+        #sideMenu label {
+            display: block;
+            margin-top: 15px;
+        }
+
+        #sideMenu input {
+            width: 100%;
+            padding: 5px;
+            margin-top: 5px;
+            box-sizing: border-box;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            border: 1px solid #34495e;
+            border-radius: 3px;
+        }
+
+        #createGrid {
+            margin-top: 20px;
+            padding: 10px;
+            width: 100%;
+            background-color: #3498db;
+            border: none;
+            color: #ecf0f1;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        #createGrid:hover {
+            background-color: #2980b9;
+        }
+
+        #gridContainer.hideGridLines .gridCell {
+            border: none;
+        }
+
+        #gridContainer.hideGridLines .gridCell.selectedCell {
+            border: 2px solid #7df9ff;
+        }
+
+        #gridContainer.hideResizers .resizer {
+            display: none;
+        }
+
+        .fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2000;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1500;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(26, 37, 47, 0.9);
+        }
+
+        .modal-content {
+            background-color: #1f2c38;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #34495e;
+            width: 80%;
+            max-width: 600px;
+            color: #ecf0f1;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        #closeModal {
+            color: #ecf0f1;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        #shortcutModal h2 {
+            margin-top: 0;
+        }
+
+        #shortcutModal ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        #shortcutModal li {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <button id="menuToggle"><span></span></button>
+    <div id="sideMenu">
+        <h2>Controles do Grid</h2>
+        <label for="rows">Número de linhas:</label>
+        <input type="number" id="rows" min="1" value="4">
+        <label for="cols">Número de colunas:</label>
+        <input type="number" id="cols" min="1" value="4">
+        <button id="createGrid">Criar Grid</button>
+    </div>
+    <div id="content">
+        <div id="gridContainer"></div>
+    </div>
+    <div id="shortcutModal" class="modal" style="display: block;">
+        <div class="modal-content">
+            <span id="closeModal">×</span>
+            <h2>Bem-vindo ao Easy Cell</h2>
+            <p>O Easy Cell permite criar uma grade personalizável para organizar e exibir conteúdos como imagens, vídeos, PDFs, URLs e arquivos HTML. Use os atalhos abaixo para interagir com a aplicação:</p>
+            <ul>
+                <li><strong>Ctrl+M</strong>: Mostrar/Ocultar menu lateral</li>
+                <li><strong>Ctrl+G</strong>: Mesclar/Desmesclar células selecionadas</li>
+                <li><strong>Ctrl+F</strong>: Alternar tela cheia para a célula selecionada</li>
+                <li><strong>Ctrl+I</strong>: Ocultar/Exibir linhas do grid</li>
+                <li><strong>Ctrl+L</strong>: Ocultar/Exibir redimensionadores</li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var colSizes = [];
+            var rowSizes = [];
+            var gridContainer = document.getElementById('gridContainer');
+            var sideMenu = document.getElementById('sideMenu');
+            var menuToggle = document.getElementById('menuToggle');
+            var createGridButton = document.getElementById('createGrid');
+            var rowsInput = document.getElementById('rows');
+            var colsInput = document.getElementById('cols');
+            var shortcutModal = document.getElementById('shortcutModal');
+            var closeModal = document.getElementById('closeModal');
+
+            menuToggle.addEventListener('click', function() {
+                sideMenu.classList.toggle('open');
+            });
+
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey) {
+                    if (e.key.toLowerCase() === 'm') {
+                        e.preventDefault();
+                        sideMenu.classList.toggle('open');
+                    } else if (e.key.toLowerCase() === 'g') {
+                        e.preventDefault();
+                        handleMergeUnmerge();
+                    } else if (e.key.toLowerCase() === 'f') {
+                        e.preventDefault();
+                        toggleFullScreen();
+                    } else if (e.key.toLowerCase() === 'i') {
+                        e.preventDefault();
+                        toggleGridLines();
+                    } else if (e.key.toLowerCase() === 'l') {
+                        e.preventDefault();
+                        toggleResizers();
+                    }
+                } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    navigateCell(e.key);
+                }
+            });
+
+            createGridButton.addEventListener('click', function() {
+                var rows = parseInt(rowsInput.value);
+                var cols = parseInt(colsInput.value);
+                createGrid(rows, cols);
+                sideMenu.classList.remove('open');
+            });
+
+            function createGrid(rows, cols) {
+                gridContainer.innerHTML = '';
+                colSizes = [];
+                rowSizes = [];
+
+                for (var i = 0; i < cols; i++) {
+                    colSizes.push(100 / cols);
+                }
+                for (var i = 0; i < rows; i++) {
+                    rowSizes.push(100 / rows);
+                }
+
+                updateGridTemplate();
+
+                for (var r = 0; r < rows; r++) {
+                    for (var c = 0; c < cols; c++) {
+                        var cell = document.createElement('div');
+                        cell.className = 'gridCell';
+                        cell.style.gridRow = r + 1;
+                        cell.style.gridColumn = c + 1;
+
+                        cell.addEventListener('click', function(e) {
+                            if (e.ctrlKey) {
+                                this.classList.toggle('selectedCell');
+                            } else {
+                                document.querySelectorAll('.gridCell').forEach(function(el) {
+                                    el.classList.remove('selectedCell');
+                                });
+                                this.classList.add('selectedCell');
+                            }
+                        });
+
+                        cell.addEventListener('dragenter', function(e) {
+                            e.preventDefault();
+                            this.classList.add('dragover');
+                        });
+
+                        cell.addEventListener('dragover', function(e) {
+                            e.preventDefault();
+                        });
+
+                        cell.addEventListener('dragleave', function(e) {
+                            e.preventDefault();
+                            this.classList.remove('dragover');
+                        });
+
+                        cell.addEventListener('drop', function(e) {
+                            e.preventDefault();
+                            this.classList.remove('dragover');
+                            var cellElement = this;
+
+                            var url = e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain');
+                            if (url && isValidUrl(url)) {
+                                var iframe = document.createElement('iframe');
+                                iframe.src = url;
+                                iframe.style.width = '100%';
+                                iframe.style.height = '100%';
+                                iframe.style.border = 'none';
+                                cellElement.innerHTML = '';
+                                cellElement.appendChild(iframe);
+                                return;
+                            }
+
+                            var files = e.dataTransfer.files;
+                            if (files.length > 0) {
+                                var file = files[0];
+                                var fileURL = URL.createObjectURL(file);
+
+                                if (file.type.startsWith('image/')) {
+                                    var img = document.createElement('img');
+                                    img.src = fileURL;
+                                    cellElement.innerHTML = '';
+                                    cellElement.appendChild(img);
+                                } else if (file.type.startsWith('video/')) {
+                                    var video = document.createElement('video');
+                                    video.src = fileURL;
+                                    video.autoplay = true;
+                                    video.loop = true;
+                                    video.muted = true;
+                                    cellElement.innerHTML = '';
+                                    cellElement.appendChild(video);
+                                } else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+                                    var iframe = document.createElement('iframe');
+                                    iframe.src = fileURL;
+                                    iframe.style.width = '100%';
+                                    iframe.style.height = '100%';
+                                    iframe.style.border = 'none';
+                                    cellElement.innerHTML = '';
+                                    cellElement.appendChild(iframe);
+                                } else if (file.type === 'text/html' || file.name.endsWith('.html') || file.name.endsWith('.htm')) {
+                                    var iframe = document.createElement('iframe');
+                                    iframe.src = fileURL;
+                                    iframe.style.width = '100%';
+                                    iframe.style.height = '100%';
+                                    iframe.style.border = 'none';
+                                    cellElement.innerHTML = '';
+                                    cellElement.appendChild(iframe);
+                                } else {
+                                    alert('Por favor, arraste uma imagem, vídeo, PDF, arquivo HTML ou URL.');
+                                }
+                            }
+                        });
+
+                        gridContainer.appendChild(cell);
+                    }
+                }
+
+                for (var i = 1; i < cols; i++) {
+                    var resizer = document.createElement('div');
+                    resizer.className = 'resizer col-resizer';
+                    resizer.style.left = `calc(${getCumulativeSize(colSizes, i)}% - 2.5px)`;
+                    resizer.style.top = '0';
+                    resizer.style.bottom = '0';
+                    attachColResizer(resizer, i);
+                    gridContainer.appendChild(resizer);
+                }
+
+                for (var i = 1; i < rows; i++) {
+                    var resizer = document.createElement('div');
+                    resizer.className = 'resizer row-resizer';
+                    resizer.style.top = `calc(${getCumulativeSize(rowSizes, i)}% - 2.5px)`;
+                    resizer.style.left = '0';
+                    resizer.style.right = '0';
+                    attachRowResizer(resizer, i);
+                    gridContainer.appendChild(resizer);
+                }
+            }
+
+            function updateGridTemplate() {
+                gridContainer.style.gridTemplateColumns = colSizes.map(s => s + '%').join(' ');
+                gridContainer.style.gridTemplateRows = rowSizes.map(s => s + '%').join(' ');
+            }
+
+            function getCumulativeSize(sizes, index) {
+                var sum = 0;
+                for (var i = 0; i < index; i++) {
+                    sum += sizes[i];
+                }
+                return sum;
+            }
+
+            function toggleResizers() {
+                gridContainer.classList.toggle('hideResizers');
+            }
+
+            function attachColResizer(resizer, index) {
+                var startX, startColSize, totalSize;
+
+                resizer.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    startX = e.pageX;
+                    startColSize = colSizes[index - 1];
+                    totalSize = colSizes.slice(index - 1).reduce(function(a, b) { return a + b; }, 0);
+
+                    document.addEventListener('mousemove', colResize);
+                    document.addEventListener('mouseup', stopColResize);
+                });
+
+                function colResize(e) {
+                    var dx = e.pageX - startX;
+                    var deltaPercent = dx / gridContainer.clientWidth * 100;
+                    var newSize = startColSize + deltaPercent;
+
+                    if (newSize > 5 && newSize < totalSize - 5) {
+                        colSizes[index - 1] = newSize;
+                        var remainingSize = totalSize - newSize;
+                        var sizesRight = colSizes.slice(index);
+                        var sizesRightTotal = sizesRight.reduce(function(a, b) { return a + b; }, 0);
+
+                        for (var i = index; i < colSizes.length; i++) {
+                            colSizes[i] = (colSizes[i] / sizesRightTotal) * remainingSize;
+                        }
+
+                        updateGridTemplate();
+                        updateColResizers();
+                    }
+                }
+
+                function stopColResize() {
+                    document.removeEventListener('mousemove', colResize);
+                    document.removeEventListener('mouseup', stopColResize);
+                }
+            }
+
+            function attachRowResizer(resizer, index) {
+                var startY, startRowSize, totalSize;
+
+                resizer.addEventListener('mousedown', function(e) {
+                    e.preventDefault();
+                    startY = e.pageY;
+                    startRowSize = rowSizes[index - 1];
+                    totalSize = rowSizes.slice(index - 1).reduce(function(a, b) { return a + b; }, 0);
+
+                    document.addEventListener('mousemove', rowResize);
+                    document.addEventListener('mouseup', stopRowResize);
+                });
+
+                function rowResize(e) {
+                    var dy = e.pageY - startY;
+                    var deltaPercent = dy / gridContainer.clientHeight * 100;
+                    var newSize = startRowSize + deltaPercent;
+
+                    if (newSize > 5 && newSize < totalSize - 5) {
+                        rowSizes[index - 1] = newSize;
+                        var remainingSize = totalSize - newSize;
+                        var sizesBelow = rowSizes.slice(index);
+                        var sizesBelowTotal = sizesBelow.reduce(function(a, b) { return a + b; }, 0);
+
+                        for (var i = index; i < rowSizes.length; i++) {
+                            rowSizes[i] = (rowSizes[i] / sizesBelowTotal) * remainingSize;
+                        }
+
+                        updateGridTemplate();
+                        updateRowResizers();
+                    }
+                }
+
+                function stopRowResize() {
+                    document.removeEventListener('mousemove', rowResize);
+                    document.removeEventListener('mouseup', stopRowResize);
+                }
+            }
+
+            function updateColResizers() {
+                document.querySelectorAll('.col-resizer').forEach(function(resizer, i) {
+                    resizer.style.left = `calc(${getCumulativeSize(colSizes, i + 1)}% - 2.5px)`;
+                });
+            }
+
+            function updateRowResizers() {
+                document.querySelectorAll('.row-resizer').forEach(function(resizer, i) {
+                    resizer.style.top = `calc(${getCumulativeSize(rowSizes, i + 1)}% - 2.5px)`;
+                });
+            }
+
+            function handleMergeUnmerge() {
+                var selectedCells = document.querySelectorAll('.selectedCell');
+                if (selectedCells.length > 1) {
+                    mergeCells(selectedCells);
+                } else if (selectedCells.length === 1) {
+                    unmergeCell(selectedCells[0]);
+                }
+            }
+
+            function mergeCells(selectedCells) {
+                if (!areCellsAdjacent(selectedCells)) {
+                    alert("As células selecionadas não são adjacentes.");
+                    return;
+                }
+
+                var rowStart = Infinity, rowEnd = -Infinity;
+                var colStart = Infinity, colEnd = -Infinity;
+
+                selectedCells.forEach(function(cell) {
+                    var gridRow = cell.style.gridRow.split(' / ');
+                    var gridColumn = cell.style.gridColumn.split(' / ');
+
+                    var rStart = parseInt(gridRow[0]);
+                    var rEnd = parseInt(gridRow[1]) || rStart;
+                    var cStart = parseInt(gridColumn[0]);
+                    var cEnd = parseInt(gridColumn[1]) || cStart;
+
+                    rowStart = Math.min(rowStart, rStart);
+                    rowEnd = Math.max(rowEnd, rEnd);
+                    colStart = Math.min(colStart, cStart);
+                    colEnd = Math.max(colEnd, cEnd);
+                });
+
+                var firstCell = selectedCells[0];
+                selectedCells.forEach(function(cell) {
+                    if (cell !== firstCell) {
+                        cell.remove();
+                    }
+                });
+
+                firstCell.style.gridRow = rowStart + ' / ' + (rowEnd + 1);
+                firstCell.style.gridColumn = colStart + ' / ' + (colEnd + 1);
+                firstCell.dataset.merged = 'true';
+                firstCell.classList.remove('selectedCell');
+            }
+
+            function unmergeCell(selectedCell) {
+                if (selectedCell.dataset.merged !== 'true') {
+                    return;
+                }
+
+                var gridRow = selectedCell.style.gridRow.split(' / ');
+                var gridColumn = selectedCell.style.gridColumn.split(' / ');
+
+                var rowStart = parseInt(gridRow[0]);
+                var rowEnd = parseInt(gridRow[1]);
+                var colStart = parseInt(gridColumn[0]);
+                var colEnd = parseInt(gridColumn[1]);
+
+                for (var r = rowStart; r < rowEnd; r++) {
+                    for (var c = colStart; c < colEnd; c++) {
+                        if (r === rowStart && c === colStart) {
+                            selectedCell.style.gridRow = r + ' / ' + (r + 1);
+                            selectedCell.style.gridColumn = c + ' / ' + (c + 1);
+                            selectedCell.dataset.merged = 'false';
+                            selectedCell.classList.remove('selectedCell');
+                        } else {
+                            var newCell = document.createElement('div');
+                            newCell.className = 'gridCell';
+                            newCell.style.gridRow = r + ' / ' + (r + 1);
+                            newCell.style.gridColumn = c + ' / ' + (c + 1);
+                            newCell.addEventListener('click', function(e) {
+                                if (e.ctrlKey) {
+                                    this.classList.toggle('selectedCell');
+                                } else {
+                                    document.querySelectorAll('.gridCell').forEach(function(el) {
+                                        el.classList.remove('selectedCell');
+                                    });
+                                    this.classList.add('selectedCell');
+                                }
+                            });
+                            gridContainer.appendChild(newCell);
+                        }
+                    }
+                }
+                selectedCell.classList.remove('selectedCell');
+            }
+
+            function areCellsAdjacent(cells) {
+                var rows = [];
+                var cols = [];
+
+                cells.forEach(function(cell) {
+                    var gridRow = cell.style.gridRow.split(' / ');
+                    var gridColumn = cell.style.gridColumn.split(' / ');
+
+                    var rStart = parseInt(gridRow[0]);
+                    var cStart = parseInt(gridColumn[0]);
+
+                    rows.push(rStart);
+                    cols.push(cStart);
+                });
+
+                rows.sort(function(a, b) { return a - b; });
+                cols.sort(function(a, b) { return a - b; });
+
+                var rowSpan = rows[rows.length - 1] - rows[0] + 1;
+                var colSpan = cols[cols.length - 1] - cols[0] + 1;
+
+                return cells.length === rowSpan * colSpan;
+            }
+
+            function toggleFullScreen() {
+                var selectedCell = document.querySelector('.selectedCell');
+                if (!selectedCell) {
+                    alert('Por favor, selecione uma célula para maximizar.');
+                    return;
+                }
+
+                if (selectedCell.classList.contains('fullscreen')) {
+                    selectedCell.classList.remove('fullscreen');
+                    document.querySelectorAll('.gridCell').forEach(function(cell) {
+                        cell.style.display = '';
+                    });
+                    sideMenu.style.display = '';
+                    menuToggle.style.display = '';
+                } else {
+                    document.querySelectorAll('.gridCell').forEach(function(cell) {
+                        if (cell !== selectedCell) {
+                            cell.style.display = 'none';
+                        }
+                    });
+                    selectedCell.classList.add('fullscreen');
+                    sideMenu.style.display = 'none';
+                    menuToggle.style.display = 'none';
+                }
+            }
+
+            function toggleGridLines() {
+                gridContainer.classList.toggle('hideGridLines');
+            }
+
+            function navigateCell(direction) {
+                var selectedCells = document.querySelectorAll('.gridCell.selectedCell');
+                if (selectedCells.length === 0) {
+                    var firstCell = document.querySelector('.gridCell');
+                    if (firstCell) {
+                        firstCell.classList.add('selectedCell');
+                    }
+                    return;
+                }
+
+                var currentCell = selectedCells[0];
+                var gridRow = currentCell.style.gridRow.split(' / ');
+                var gridColumn = currentCell.style.gridColumn.split(' / ');
+
+                var rowStart = parseInt(gridRow[0]);
+                var colStart = parseInt(gridColumn[0]);
+
+                var newRow = rowStart;
+                var newCol = colStart;
+
+                if (direction === 'ArrowUp') {
+                    newRow = rowStart - 1;
+                } else if (direction === 'ArrowDown') {
+                    newRow = rowStart + 1;
+                } else if (direction === 'ArrowLeft') {
+                    newCol = colStart - 1;
+                } else if (direction === 'ArrowRight') {
+                    newCol = colStart + 1;
+                }
+
+                var targetCell = Array.from(document.querySelectorAll('.gridCell')).find(function(cell) {
+                    var cellRow = cell.style.gridRow.split(' / ');
+                    var cellCol = cell.style.gridColumn.split(' / ');
+                    var cellRowStart = parseInt(cellRow[0]);
+                    var cellColStart = parseInt(cellCol[0]);
+
+                    return cellRowStart === newRow && cellColStart === newCol;
+                });
+
+                if (targetCell) {
+                    document.querySelectorAll('.gridCell').forEach(function(cell) {
+                        cell.classList.remove('selectedCell');
+                    });
+                    targetCell.classList.add('selectedCell');
+                }
+            }
+
+            closeModal.addEventListener('click', function() {
+                shortcutModal.style.display = 'none';
+            });
+
+            window.addEventListener('click', function(event) {
+                if (event.target === shortcutModal) {
+                    shortcutModal.style.display = 'none';
+                }
+            });
+
+            function isValidUrl(string) {
+                try {
+                    new URL(string);
+                    return true;
+                } catch (_) {
+                    return false;
+                }
+            }
+
+            createGrid(4, 4);
+        });
+    </script>
+</body>
+</html>

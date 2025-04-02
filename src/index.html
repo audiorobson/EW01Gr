@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Easy Wall Multiscreen</title>
+  <link rel="stylesheet" href="main.css" id="themeStylesheet">
+</head>
+<body>
+  <!-- Seção: Cabeçalho -->
+  <div class="header">
+    <img src="../img/logo.svg" alt="Logo" class="logo">
+    <div class="actions">
+      <button id="btnOpenFile" title="Abrir Arquivo">
+        <svg class="icon"><use xlink:href="#folder"></use></svg>
+        <span class="tooltip">Abrir Arquivo</span>
+      </button>
+      <button id="btnOpenUrlList" title="Gerenciar URLs">
+        <svg class="icon"><use xlink:href="#globe"></use></svg>
+        <span class="tooltip">Gerenciar URLs</span>
+      </button>
+      <button id="btnOpenUrl" title="Abrir URL">
+        <svg class="icon"><use xlink:href="#globe"></use></svg>
+        <span class="tooltip">Abrir URL</span>
+      </button>
+      <button id="btnOpenUsbVideo" title="Capturar Vídeo USB">
+        <svg class="icon"><use xlink:href="#camera"></use></svg>
+        <span class="tooltip">Capturar Vídeo USB</span>
+      </button>
+      <button id="btnOpenNativeApp" title="Abrir Aplicação Nativa">
+        <svg class="icon"><use xlink:href="#folder"></use></svg>
+        <span class="tooltip">Abrir Aplicação Nativa</span>
+      </button>
+      <button id="btnOpenApps" title="Aplicativos">
+        <svg class="icon"><use xlink:href="#apps"></use></svg>
+        <span class="tooltip">Aplicativos</span>
+      </button>
+      <button id="btnSaveLayout" title="Salvar Layout">
+        <svg class="icon"><use xlink:href="#save"></use></svg>
+        <span class="tooltip">Salvar Layout</span>
+      </button>
+      <button id="btnLoadLayout" title="Carregar Layout">
+        <svg class="icon"><use xlink:href="#folder"></use></svg>
+        <span class="tooltip">Carregar Layout</span>
+      </button>
+      <button id="btnExportImport" title="Exportar/Importar Layouts">
+        <svg class="icon"><use xlink:href="#upload"></use></svg>
+        <span class="tooltip">Exportar/Importar Layouts</span>
+      </button>
+      <button id="btnIdentifyMonitors" title="Identificar Monitores">
+        <svg class="icon"><use xlink:href="#monitor"></use></svg>
+        <span class="tooltip">Identificar Monitores</span>
+      </button>
+      <button id="btnScheduleLayout" title="Agendar Layout">
+        <svg class="icon"><use xlink:href="#calendar"></use></svg>
+        <span class="tooltip">Agendar Layout</span>
+      </button>
+      <button id="btnCreateSequence" title="Criar Sequência de Layouts">
+        <svg class="icon"><use xlink:href="#sequence"></use></svg>
+        <span class="tooltip">Criar Sequência de Layouts</span>
+      </button>
+      <button id="btnStopSequence" title="Parar Sequência">
+        <svg class="icon"><use xlink:href="#stop"></use></svg>
+        <span class="tooltip">Parar Sequência</span>
+      </button>
+      <button id="btnOpenRepository" title="Abrir Repositório">
+        <svg class="icon"><use xlink:href="#folder"></use></svg>
+        <span class="tooltip">Abrir Repositório</span>
+      </button>
+      <button id="btnToggleTheme" title="Alternar Tema">
+        <svg class="icon"><use xlink:href="#sun"></use></svg>
+        <span class="tooltip">Alternar Tema</span>
+      </button>
+      <button id="btnToggleKeyboard" title="Abrir/Fechar Teclado (Ctrl+K)">
+        <svg class="icon"><use xlink:href="#keyboard"></use></svg>
+        <span class="tooltip">Abrir/Fechar Teclado (Ctrl+K)</span>
+      </button>
+      <button id="btnFullScreen" title="Tela Cheia (F11)">
+        <svg class="icon"><use xlink:href="#fullscreen"></use></svg>
+        <span class="tooltip">Tela Cheia (F11)</span>
+      </button>
+      <button id="btnRefreshAll" title="Atualizar Tudo">
+        <svg class="icon"><use xlink:href="#reload"></use></svg>
+        <span class="tooltip">Atualizar Tudo</span>
+      </button>
+      <button id="btnExportLogs" title="Exportar Logs">
+        <svg class="icon"><use xlink:href="#upload"></use></svg>
+        <span class="tooltip">Exportar Logs</span>
+      </button>
+      <button id="btnLogout" title="Logout">
+        <svg class="icon"><use xlink:href="#logout"></use></svg>
+        <span class="tooltip">Logout</span>
+      </button>
+    </div>
+    <div class="clock" id="clock"></div>
+  </div>
+
+  <!-- Seção: Conteúdo Principal -->
+  <div class="container">
+    <div class="sidebar">
+      <div class="form-group two-columns">
+        <div>
+          <h2>Posição X</h2>
+          <input type="number" id="inputPositionX" value="0" min="0">
+        </div>
+        <div>
+          <h2>Posição Y</h2>
+          <input type="number" id="inputPositionY" value="0" min="0">
+        </div>
+      </div>
+      <div class="form-group two-columns">
+        <div>
+          <h2>Largura</h2>
+          <input type="number" id="inputWidth" value="800" min="1">
+        </div>
+        <div>
+          <h2>Altura</h2>
+          <input type="number" id="inputHeight" value="600" min="1">
+        </div>
+      </div>
+      <h2>Presets Tamanhos</h2>
+      <div class="presets" id="presetsList">
+        <button onclick="setPreset(1920, 1080)">1920x1080</button>
+        <button onclick="setPreset(960, 540)">960x540</button>
+        <button onclick="setPreset(3840, 2160)">3840x2160</button>
+      </div>
+      <button id="btnCustomizePresets" style="background: #00c4ff; color: #fff; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 14px;">Personalizar Presets</button>
+      <h2>Layouts Salvos</h2>
+      <div id="layoutList" class="layout-list"></div>
+    </div>
+    <div class="content">
+      <h2>Preview Monitores</h2>
+      <div id="monitorGrid" class="monitor-grid"></div>
+      <div class="window-list-container">
+        <div class="window-list-header" onclick="toggleWindowList()">
+          <h2>Fontes</h2>
+          <span id="toggleIcon">▼</span>
+        </div>
+        <div id="sourcesLoadingSpinner" class="spinner" style="display: none;">Carregando...</div>
+        <div id="windowList" class="window-list"></div>
+        <div class="window-list-actions">
+          <button onclick="closeAllWindows()">Fechar Todas as Janelas</button>
+          <button id="btnReloadSources" title="Recarregar Fontes">Recarregar Fontes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seção: Teclado Virtual -->
+  <div id="virtualKeyboard" class="keyboard-bar">
+    <div class="keyboard">
+      <div class="keyboard-row">
+        <button class="key" data-key="`">`</button>
+        <button class="key" data-key="1">1</button>
+        <button class="key" data-key="2">2</button>
+        <button class="key" data-key="3">3</button>
+        <button class="key" data-key="4">4</button>
+        <button class="key" data-key="5">5</button>
+        <button class="key" data-key="6">6</button>
+        <button class="key" data-key="7">7</button>
+        <button class="key" data-key="8">8</button>
+        <button class="key" data-key="9">9</button>
+        <button class="key" data-key="0">0</button>
+        <button class="key" data-key="-">-</button>
+        <button class="key" data-key="=">=</button>
+        <button class="key special" data-key="Backspace">⌫</button>
+      </div>
+      <div class="keyboard-row">
+        <button class="key special" data-key="Tab">Tab</button>
+        <button class="key" data-key="q">q</button>
+        <button class="key" data-key="w">w</button>
+        <button class="key" data-key="e">e</button>
+        <button class="key" data-key="r">r</button>
+        <button class="key" data-key="t">t</button>
+        <button class="key" data-key="y">y</button>
+        <button class="key" data-key="u">u</button>
+        <button class="key" data-key="i">i</button>
+        <button class="key" data-key="o">o</button>
+        <button class="key" data-key="p">p</button>
+        <button class="key" data-key="´">´</button>
+        <button class="key" data-key="[">[</button>
+      </div>
+      <div class="keyboard-row">
+        <button class="key special" data-key="CapsLock">Caps</button>
+        <button class="key" data-key="a">a</button>
+        <button class="key" data-key="s">s</button>
+        <button class="key" data-key="d">d</button>
+        <button class="key" data-key="f">f</button>
+        <button class="key" data-key="g">g</button>
+        <button class="key" data-key="h">h</button>
+        <button class="key" data-key="j">j</button>
+        <button class="key" data-key="k">k</button>
+        <button class="key" data-key="l">l</button>
+        <button class="key" data-key="ç">ç</button>
+        <button class="key" data-key="~">~</button>
+        <button class="key special" data-key="Enter">⏎</button>
+      </div>
+      <div class="keyboard-row">
+        <button class="key special" data-key="Shift">Shift</button>
+        <button class="key" data-key="z">z</button>
+        <button class="key" data-key="x">x</button>
+        <button class="key" data-key="c">c</button>
+        <button class="key" data-key="v">v</button>
+        <button class="key" data-key="b">b</button>
+        <button class="key" data-key="n">n</button>
+        <button class="key" data-key="m">m</button>
+        <button class="key" data-key=",">,</button>
+        <button class="key" data-key=".">.</button>
+        <button class="key" data-key=";">;</button>
+        <button class="key" data-key="/">/</button>
+        <button class="key special" data-key="Shift">Shift</button>
+      </div>
+      <div class="keyboard-row">
+        <button class="key special" data-key="Ctrl">Ctrl</button>
+        <button class="key special" data-key="Alt">Alt</button>
+        <button class="key space" data-key=" ">Espaço</button>
+        <button class="key special" data-key="AltGr">AltGr</button>
+        <button class="key special" data-key="Ctrl">Ctrl</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Seção: Modals -->
+  <div id="licenseModal" class="modal">
+    <div class="modal-content">
+      <h3>Inserir Chave de Licença</h3>
+      <div class="form-group">
+        <label for="licenseKey">Chave de Licença:</label>
+        <input type="text" id="licenseKey" placeholder="Ex: client123:2025-12-31:abc123...">
+      </div>
+      <div class="modal-actions">
+        <button id="btnConfirmLicense">Validar</button>
+      </div>
+    </div>
+  </div>
+  <div id="urlModal" class="modal">
+    <div class="modal-content">
+      <h3>Abrir URL</h3>
+      <div id="urlLoadingSpinner" class="spinner" style="display: none;">Carregando...</div>
+      <input type="text" id="inputUrl" placeholder="https://exemplo.com">
+      <div class="modal-actions">
+        <button id="btnCancelUrl">Cancelar</button>
+        <button id="btnConfirmUrl">Abrir</button>
+      </div>
+    </div>
+  </div>
+  <div id="urlListModal" class="modal">
+    <div class="modal-content">
+      <h3>Gerenciar URLs</h3>
+      <div class="form-group">
+        <label for="urlName">Nome:</label>
+        <input type="text" id="urlName" placeholder="Nome da URL">
+      </div>
+      <div class="form-group">
+        <label for="urlAddress">Endereço:</label>
+        <input type="text" id="urlAddress" placeholder="https://exemplo.com">
+      </div>
+      <div class="form-group">
+        <label for="urlCategory">Categoria:</label>
+        <input type="text" id="urlCategory" placeholder="Categoria (opcional)">
+      </div>
+      <div class="form-group">
+        <label for="urlFavorite">Favorito:</label>
+        <input type="checkbox" id="urlFavorite">
+      </div>
+      <div class="url-list" id="urlList"></div>
+      <div class="modal-actions">
+        <button id="btnClearAllUrls">Limpar Tudo</button>
+        <button id="btnCancelUrlList">Cancelar</button>
+        <button id="btnSaveUrl">Salvar</button>
+      </div>
+    </div>
+  </div>
+  <div id="urlHistoryModal" class="modal">
+    <div class="modal-content">
+      <h3>Histórico de URLs</h3>
+      <div class="url-list" id="urlHistoryList"></div>
+      <div class="modal-actions">
+        <button id="btnClearUrlHistory">Limpar Histórico</button>
+        <button id="btnCloseUrlHistory">Fechar</button>
+      </div>
+    </div>
+  </div>
+  <div id="usbVideoModal" class="modal">
+    <div class="modal-content">
+      <h3>Capturar Vídeo USB</h3>
+      <select id="usbVideoDevices"></select>
+      <div class="modal-actions">
+        <button id="btnCancelUsbVideo">Cancelar</button>
+        <button id="btnConfirmUsbVideo">Abrir</button>
+      </div>
+    </div>
+  </div>
+  <div id="nativeAppModal" class="modal">
+    <div class="modal-content">
+      <h3>Abrir Aplicação Nativa</h3>
+      <div class="form-group">
+        <label for="nativeAppPath">Caminho do Executável:</label>
+        <input type="text" id="nativeAppPath" placeholder="Caminho do executável (ex: C:\\Windows\\notepad.exe)">
+        <button id="btnSelectNativeAppPath">Selecionar</button>
+      </div>
+      <div class="modal-actions">
+        <button id="btnCancelNativeApp">Cancelar</button>
+        <button id="btnConfirmNativeApp">Abrir</button>
+      </div>
+    </div>
+  </div>
+  <div id="appsModal" class="modal">
+    <div class="modal-content">
+      <h3>Aplicativos</h3>
+      <div class="apps-list">
+        <div class="app-item" onclick="openApp('easycycle')">
+          <img src="../img/easycycle-icon.png" alt="EasyCycle" class="app-icon">
+          <span>EasyCycle</span>
+        </div>
+        <div class="app-item" onclick="openApp('easymosaic')">
+          <img src="../img/easymosaic-icon.png" alt="EasyMosaic" class="app-icon">
+          <span>EasyMosaic</span>
+        </div>
+        <div class="app-item" onclick="openApp('easygrid')">
+          <img src="../img/easygrid-icon.png" alt="EasyGrid" class="app-icon">
+          <span>EasyGrid</span>
+        </div>
+        <div class="app-item" onclick="openApp('easyeditor')">
+          <img src="../img/easyeditor-icon.png" alt="EasyEditor" class="app-icon">
+          <span>EasyEditor</span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="btnCancelApps">Cancelar</button>
+      </div>
+    </div>
+  </div>
+  <div id="saveLayoutModal" class="modal">
+    <div class="modal-content">
+      <h3>Salvar Layout</h3>
+      <input type="text" id="inputLayoutName" placeholder="Nome do Layout">
+      <div class="form-group">
+        <label for="layoutShortcut">Atalho (Ctrl + Tecla):</label>
+        <input type="text" id="layoutShortcut" placeholder="Ex: Ctrl+1">
+      </div>
+      <div class="modal-actions">
+        <button id="btnCancelSaveLayout">Cancelar</button>
+        <button id="btnConfirmSaveLayout">Salvar</button>
+      </div>
+    </div>
+  </div>
+  <div id="loadLayoutModal" class="modal">
+    <div class="modal-content">
+      <h3>Confirmar Carregamento</h3>
+      <p>Deseja carregar o layout "<span id="layoutName"></span>"?</p>
+      <div class="modal-actions">
+        <button id="btnCancelLoadLayout">Cancelar</button>
+        <button id="btnConfirmLoadLayout">Carregar</button>
+      </div>
+    </div>
+  </div>
+  <div id="exportImportModal" class="modal">
+    <div class="modal-content">
+      <h3>Exportar/Importar Layouts</h3>
+      <div class="modal-actions">
+        <button id="btnExportLayouts">Exportar</button>
+        <button id="btnImportLayouts">Importar</button>
+        <button id="btnCancelExportImport">Cancelar</button>
+      </div>
+    </div>
+  </div>
+  <div id="editWindowModal" class="modal">
+    <div class="modal-content">
+      <h3>Editar Janela</h3>
+      <div class="form-group">
+        <label for="editPositionX">Posição X:</label>
+        <input type="number" id="editPositionX" min="0">
+      </div>
+      <div class="form-group">
+        <label for="editPositionY">Posição Y:</label>
+        <input type="number" id="editPositionY" min="0">
+      </div>
+      <div class="form-group">
+        <label for="editWidth">Largura:</label>
+        <input type="number" id="editWidth" min="1">
+      </div>
+      <div class="form-group">
+        <label for="editHeight">Altura:</label>
+        <input type="number" id="editHeight" min="1">
+      </div>
+      <div class="modal-actions">
+        <button id="btnCancelEditWindow">Cancelar</button>
+        <button id="btnConfirmEditWindow">Salvar</button>
+      </div>
+    </div>
+  </div>
+  <div id="monitorSettingsModal" class="modal">
+    <div class="modal-content">
+      <h3>Configurações de Monitores</h3>
+      <div id="monitorNamesList"></div>
+      <div class="modal-actions">
+        <button id="btnSaveMonitorSettings">Salvar</button>
+        <button id="btnCancelMonitorSettings">Cancelar</button>
+      </div>
+    </div>
+  </div>
+  <div id="repositorySettingsModal" class="modal">
+    <div class="modal-content">
+      <h3>Configurações de Repositório</h3>
+      <div class="form-group">
+        <label for="repositoryPath">Caminho do Repositório:</label>
+        <input type="text" id="repositoryPath" placeholder="Caminho da pasta">
+        <button id="btnSelectRepositoryPath">Selecionar</button>
+      </div>
+      <div class="form-group">
+        <label for="showLoading">Mostrar Tela de Loading:</label>
+        <input type="checkbox" id="showLoading">
+      </div>
+      <div class="modal-actions">
+        <button id="btnSaveRepositorySettings">Salvar</button>
+        <button id="btnCancelRepositorySettings">Cancelar</button>
+      </div>
+    </div>
+  </div>
+  <div id="userRegistrationModal" class="modal">
+    <div class="modal-content">
+      <h3>Cadastrar Usuário</h3>
+      <div class="form-group">
+        <label for="userName">Nome:</label>
+        <input type="text" id="userName" placeholder="Nome do usuário">
+      </div>
+      <div class="form-group">
+        <label for="userEmail">E-mail:</label>
+        <input type="text" id="userEmail" placeholder="E-mail do usuário">
+      </div>
+      <div class="form-group">
+        <label for="userPassword">Senha:</label>
+        <input type="password" id="userPassword" placeholder="Senha">
+      </div>
+      <div class="form-group">
+        <label for="userRole">Tipo de Usuário:</label>
+        <select id="userRole">
+          <option value="admin">Admin</option>
+          <option value="operator">Operador</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button id="btnCancelUserRegistration">Cancelar</button>
+        <button id="btnConfirmUserRegistration">Cadastrar</button>
+      </div>
+    </div>
+  </div>
+  <div id="userListModal" class="modal">
+    <div class="modal-content">
+      <h3>Listar Usuários</h3>
+      <div class="user-list" id="userList"></div>
+      <div class="modal-actions">
+        <button id="btnCloseUserList">Fechar</button>
+      </div>
+    </div>
+  </div>
+  <div id="scheduleLayoutModal" class="modal">
+    <div class="modal-content">
+      <h3>Agendar Layout</h3>
+      <div class="form-group">
+        <label>Relógio Atual:</label>
+        <div id="scheduleClock" style="font-size: 14px; color: #b0b0b0;"></div>
+      </div>
+      <div class="form-group">
+        <label for="scheduleLayoutName">Layout:</label>
+        <select id="scheduleLayoutName"></select>
+      </div>
+      <div class="form-group">
+        <label for="scheduleDate">Data (YYYY-MM-DD):</label>
+        <input type="date" id="scheduleDate">
+      </div>
+      <div class="form-group">
+        <label for="scheduleTime">Horário (HH:MM):</label>
+        <input type="time" id="scheduleTime">
+      </div>
+      <div class="schedule-list">
+        <h4>Layouts Agendados</h4>
+        <div id="scheduledLayoutsList"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="btnCancelSchedule">Cancelar</button>
+        <button id="btnConfirmSchedule">Agendar</button>
+      </div>
+    </div>
+  </div>
+  <div id="sequenceModal" class="modal">
+    <div class="modal-content">
+      <h3>Criar Sequência de Layouts</h3>
+      <div id="sequenceList"></div>
+      <button onclick="addSequenceItem()">Adicionar Layout</button>
+      <div class="modal-actions">
+        <button id="btnCancelSequence">Cancelar</button>
+        <button id="btnConfirmSequence">Iniciar</button>
+      </div>
+    </div>
+  </div>
+  <div id="presetModal" class="modal">
+    <div class="modal-content">
+      <h3>Personalizar Presets</h3>
+      <div class="form-group">
+        <label for="presetName">Nome do Preset:</label>
+        <input type="text" id="presetName" placeholder="Nome do preset">
+      </div>
+      <div class="form-group">
+        <label for="presetWidth">Largura:</label>
+        <input type="number" id="presetWidth" min="1">
+      </div>
+      <div class="form-group">
+        <label for="presetHeight">Altura:</label>
+        <input type="number" id="presetHeight" min="1">
+      </div>
+      <div class="preset-list" id="presetList"></div>
+      <div class="modal-actions">
+        <button id="btnCancelPreset">Cancelar</button>
+        <button id="btnSavePreset">Salvar</button>
+      </div>
+    </div>
+  </div>
+  <div id="fileListModal" class="modal">
+    <div class="modal-content">
+      <h3>Gerenciar Arquivos</h3>
+      <div class="form-group">
+        <label for="fileName">Nome:</label>
+        <input type="text" id="fileName" placeholder="Nome do arquivo">
+      </div>
+      <div class="form-group">
+        <label for="filePath">Caminho:</label>
+        <input type="text" id="filePath" placeholder="Caminho do arquivo">
+        <button id="btnSelectFilePath">Selecionar</button>
+      </div>
+      <div class="form-group">
+        <label for="fileCategory">Categoria:</label>
+        <input type="text" id="fileCategory" placeholder="Categoria (opcional)">
+      </div>
+      <div class="form-group">
+        <label for="fileFavorite">Favorito:</label>
+        <input type="checkbox" id="fileFavorite">
+      </div>
+      <div class="file-list" id="fileList"></div>
+      <div class="modal-actions">
+        <button id="btnClearAllFiles">Limpar Tudo</button>
+        <button id="btnCancelFileList">Cancelar</button>
+        <button id="btnSaveFile">Salvar</button>
+      </div>
+    </div>
+  </div>
+  <div id="aboutModal" class="modal">
+    <div class="modal-content">
+      <h3>Sobre o Easy Wall Multiscreen</h3>
+      <div class="about-info">
+        <p><strong>Versão:</strong> 1.0.0</p>
+        <p><strong>Número de Licença:</strong> <span id="licenseKeyDisplay" style="word-break: break-all;">Carregando...</span></p>
+        <p><strong>Site:</strong> <a href="http://www.easywall.com.br" target="_blank">www.easywall.com.br</a></p>
+      </div>
+      <div class="modal-actions">
+        <button id="btnCloseAbout">Fechar</button>
+      </div>
+    </div>
+  </div>
+  <div id="shortcutsModal" class="modal">
+    <div class="modal-content">
+      <h3>Atalhos de Teclado</h3>
+      <ul>
+        <li><strong>CmdOrCtrl+O</strong>: Abrir Arquivo</li>
+        <li><strong>CmdOrCtrl+U</strong>: Abrir URL</li>
+        <li><strong>CmdOrCtrl+S</strong>: Salvar Layout</li>
+        <li><strong>CmdOrCtrl+L</strong>: Carregar Layout</li>
+        <li><strong>CmdOrCtrl+Shift+A</strong>: Agendar Layout</li>
+        <li><strong>CmdOrCtrl+Shift+S</strong>: Criar Sequência de Layouts</li>
+        <li><strong>CmdOrCtrl+Shift+P</strong>: Parar Sequência</li>
+        <li><strong>CmdOrCtrl+K</strong>: Abrir/Fechar Teclado Virtual</li>
+        <li><strong>F11</strong>: Tela Cheia</li>
+        <li><strong>CmdOrCtrl+Q</strong>: Sair</li>
+      </ul>
+      <div class="modal-actions">
+        <button id="btnCloseShortcuts">Fechar</button>
+      </div>
+    </div>
+  </div>
+  <div id="notification" class="notification"></div>
+
+  <!-- Seção: Ícones SVG -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+    <symbol id="globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10"></circle>
+      <path d="M2 12h20"></path>
+      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+    </symbol>
+    <symbol id="video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 8v8H5V8h10m5-2H3a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2z"></path>
+      <path d="M22 12l-4-4v8l4-4z"></path>
+    </symbol>
+    <symbol id="camera" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+      <circle cx="12" cy="13" r="4"></circle>
+    </symbol>
+    <symbol id="save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+      <path d="M7 3v6h6"></path>
+      <path d="M7 21v-6h10v6"></path>
+    </symbol>
+    <symbol id="folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+    </symbol>
+    <symbol id="upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+      <polyline points="17 8 12 3 7 8"></polyline>
+      <line x1="12" y1="3" x2="12" y2="15"></line>
+    </symbol>
+    <symbol id="monitor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+      <line x1="8" y1="21" x2="16" y2="21"></line>
+      <line x1="12" y1="17" x2="12" y2="21"></line>
+    </symbol>
+    <symbol id="calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="16" y1="2" x2="16" y2="6"></line>
+      <line x1="8" y1="2" x2="8" y2="6"></line>
+      <line x1="3" y1="10" x2="21" y2="10"></line>
+    </symbol>
+    <symbol id="sequence" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M4 12h16"></path>
+      <path d="M12 4v16"></path>
+      <path d="M8 8l4 4-4 4"></path>
+      <path d="M16 8l-4 4 4 4"></path>
+    </symbol>
+    <symbol id="stop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+    </symbol>
+    <symbol id="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </symbol>
+    <symbol id="keyboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+      <path d="M6 8h12"></path>
+      <path d="M6 12h12"></path>
+      <path d="M6 16h12"></path>
+    </symbol>
+    <symbol id="fullscreen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+    </symbol>
+    <symbol id="reload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M23 4v6h-6"></path>
+      <path d="M1 20v-6h6"></path>
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 4"></path>
+      <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 20"></path>
+    </symbol>
+    <symbol id="logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+      <polyline points="16 17 21 12 16 7"></polyline>
+      <line x1="21" y1="12" x2="9" y2="12"></line>
+    </symbol>
+    <symbol id="apps" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7"></rect>
+      <rect x="14" y="3" width="7" height="7"></rect>
+      <rect x="14" y="14" width="7" height="7"></rect>
+      <rect x="3" y="14" width="7" height="7"></rect>
+    </symbol>
+  </svg>
+
+  <!-- Seção: Scripts -->
+  <script src="index.js"></script>
+</body>
+</html>

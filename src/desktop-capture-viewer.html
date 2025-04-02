@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visualizador de Captura de Desktop</title>
+  <link rel="stylesheet" href="global.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #fff; }
+    .video-container { flex: 1; width: 100%; display: flex; justify-content: center; align-items: center; position: relative; }
+    video { width: 100%; height: 100%; object-fit: contain; }
+    .controls { position: absolute; bottom: 10px; left: 0; right: 0; background: rgba(0,0,0,0.8); color: #fff; padding: 8px; display: flex; justify-content: center; align-items: center; gap: 12px; opacity: 0; transition: opacity 0.3s; }
+    .video-container:hover .controls { opacity: 1; }
+    button { background: none; border: none; color: #fff; font-size: 16px; cursor: pointer; }
+    button:hover { color: #00c4ff; }
+    #error { font-size: 20px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="video-container">
+    <video id="desktopVideo" autoplay></video>
+    <div class="controls">
+      <button id="playPause" title="Play/Pause">▶</button>
+      <button id="mute" title="Mute/Unmute">🔊</button>
+      <button id="close" title="Fechar">✕</button>
+    </div>
+    <div id="error" style="display: none;"></div>
+  </div>
+  <script>
+    const { desktopCapturer } = require('electron');
+    const params = new URLSearchParams(window.location.search);
+    const sourceId = params.get('path');
+    const video = document.getElementById('desktopVideo');
+    const playPause = document.getElementById('playPause');
+    const mute = document.getElementById('mute');
+    const close = document.getElementById('close');
+    const error = document.getElementById('error');
+
+    async function startCapture() {
+      try {
+        console.log('Requesting display media with sourceId:', sourceId);
+        if (!navigator.mediaDevices.getDisplayMedia) {
+          console.error('getDisplayMedia is not supported');
+          error.style.display = 'block';
+          error.textContent = 'getDisplayMedia is not supported';
+          return;
+        }
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            displaySurface: 'monitor'
+          },
+          audio: false
+        });
+        console.log('Stream obtained from getDisplayMedia:', stream);
+        video.srcObject = stream;
+        video.onloadedmetadata = () => {
+          console.log('Metadata loaded');
+          video.play().then(() => console.log('Video playing')).catch(err => {
+            console.error('Error playing video:', err);
+            error.style.display = 'block';
+            error.textContent = 'Error playing video: ' + err.message;
+          });
+        };
+
+        // Publicar o stream no MediaMTX via WHIP
+        const peerConnection = new RTCPeerConnection({
+          iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        });
+        stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        const response = await fetch('http://localhost:8889/desktop/whip', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/sdp'
+          },
+          body: offer.sdp
+        });
+
+        if (!response.ok) {
+          throw new Error('Erro ao publicar o stream via WHIP: ' + response.statusText);
+        }
+
+        const answer = await response.text();
+        await peerConnection.setRemoteDescription(new RTCSessionDescription({
+          type: 'answer',
+          sdp: answer
+        }));
+        console.log('Stream publicado no MediaMTX via WHIP');
+      } catch (err) {
+        console.error('Error with getDisplayMedia:', err);
+        error.style.display = 'block';
+        error.textContent = 'Error capturing display: ' + err.message;
+
+        // Fallback to desktopCapturer
+        try {
+          console.log('Falling back to desktopCapturer');
+          const sources = await desktopCapturer.getSources({ types: ['screen'] });
+          console.log('Desktop sources:', sources);
+          if (sources.length > 0) {
+            const source = sources[0];
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: false,
+              video: {
+                mandatory: {
+                  chromeMediaSource: 'desktop',
+                  chromeMediaSourceId: source.id,
+                  minWidth: 1280,
+                  maxWidth: 1280,
+                  minHeight: 720,
+                  maxHeight: 720
+                }
+              }
+            });
+            console.log('Stream obtained from desktopCapturer:', stream);
+            video.srcObject = stream;
+            video.play().then(() => console.log('Video playing')).catch(err => {
+              console.error('Error playing video:', err);
+              error.style.display = 'block';
+              error.textContent = 'Error playing video: ' + err.message;
+            });
+          } else {
+            console.error('No desktop sources found');
+            error.style.display = 'block';
+            error.textContent = 'No desktop sources found';
+          }
+        } catch (fallbackErr) {
+          console.error('Error with desktopCapturer fallback:', fallbackErr);
+          error.style.display = 'block';
+          error.textContent = 'Error capturing display: ' + fallbackErr.message;
+        }
+      }
+    }
+
+    playPause.onclick = () => {
+      if (video.paused) {
+        video.play();
+        playPause.textContent = '❚❚';
+      } else {
+        video.pause();
+        playPause.textContent = '▶';
+      }
+    };
+    mute.onclick = () => {
+      video.muted = !video.muted;
+      mute.textContent = video.muted ? '🔇' : '🔊';
+    };
+    close.onclick = () => {
+      video.srcObject?.getTracks().forEach(track => track.stop());
+      window.close();
+    };
+
+    startCapture();
+  </script>
+</body>
+</html>

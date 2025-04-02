@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="global.css">
+  <style>
+    :root {
+      --primary-color: #00c4ff;
+    }
+    body { margin: 0; background: #000; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+    .pdf-container { flex: 1; width: 100%; position: relative; }
+    iframe { width: 100%; height: 100%; border: none; }
+    .controls { 
+      position: fixed; 
+      bottom: 0; 
+      left: 0; 
+      right: 0; 
+      background: rgba(0,0,0,0.8); 
+      color: #fff; 
+      padding: 8px; 
+      display: flex; 
+      justify-content: center; 
+      align-items: center; 
+      gap: 12px; 
+      opacity: 0; 
+      transition: opacity 0.3s; 
+      z-index: 1000; 
+    }
+    .pdf-container:hover .controls { opacity: 1; }
+    button { background: none; border: none; color: #fff; font-size: 16px; cursor: pointer; padding: 12px; min-width: 48px; min-height: 48px; }
+    button:hover { color: var(--primary-color); }
+  </style>
+</head>
+<body>
+  <div class="pdf-container">
+    <iframe id="pdfFrame"></iframe>
+    <div class="controls">
+      <button id="fullscreen" title="Tela Cheia">🖥️</button>
+      <button id="close" title="Fechar">✕</button>
+    </div>
+  </div>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const pdfPath = `file://${params.get('path')}`;
+    console.log('Loading PDF:', pdfPath);
+    document.getElementById('pdfFrame').src = pdfPath;
+
+    document.getElementById('fullscreen').addEventListener('click', () => {
+      const win = require('electron').remote.getCurrentWindow();
+      win.setFullScreen(!win.isFullScreen());
+      console.log('Toggling fullscreen');
+    });
+    document.getElementById('fullscreen').addEventListener('touchstart', () => {
+      const win = require('electron').remote.getCurrentWindow();
+      win.setFullScreen(!win.isFullScreen());
+      console.log('Toggling fullscreen');
+    });
+
+    document.getElementById('close').addEventListener('click', () => {
+      console.log('Closing PDF viewer');
+      window.close();
+    });
+    document.getElementById('close').addEventListener('touchstart', () => {
+      console.log('Closing PDF viewer');
+      window.close();
+    });
+
+    // Garantir que a barra de controle apareça ao mover o mouse
+    const container = document.querySelector('.pdf-container');
+    container.addEventListener('mousemove', (e) => {
+      const controls = document.querySelector('.controls');
+      const rect = container.getBoundingClientRect();
+      const mouseY = e.clientY - rect.top;
+      if (mouseY > rect.height - 50) {
+        controls.style.opacity = '1';
+      } else {
+        controls.style.opacity = '0';
+      }
+    });
+
+    container.addEventListener('touchstart', () => {
+      const controls = document.querySelector('.controls');
+      controls.style.opacity = controls.style.opacity === '1' ? '0' : '1';
+    });
+  </script>
+</body>
+</html>

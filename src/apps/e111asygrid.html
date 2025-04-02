@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <base href=""/>
+    <title>Easy Cell</title>
+    <!-- Incluir jQuery localmente (assumindo que o arquivo está no mesmo diretório) -->
+    <script src="jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            background-color: #1a252f; /* Cor de fundo escura */
+            color: #ecf0f1; /* Cor clara para o texto */
+        }
+
+        #sideMenu {
+            width: 250px;
+            background-color: #1f2c38; /* Fundo mais escuro para o menu lateral */
+            color: #ecf0f1; /* Texto claro */
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            transform: translateX(-100%);
+            padding: 20px;
+            transition: transform 0.3s;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        #sideMenu.open {
+            transform: translateX(0);
+        }
+
+        #menuToggle {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 30px;
+            height: 30px;
+            cursor: pointer;
+            z-index: 1100;
+            background: none;
+            border: none;
+        }
+
+        #menuToggle::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #ecf0f1;
+        }
+
+        #menuToggle::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #ecf0f1;
+        }
+
+        #menuToggle span {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #ecf0f1;
+            transform: translateY(-50%);
+        }
+
+        #content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            transition: left 0.3s;
+        }
+
+        #gridContainer {
+            display: grid;
+            width: 100%;
+            height: 100vh;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .gridCell {
+            border: 1px solid #34495e; /* Borda escura para o tema */
+            background-color: #2c3e50; /* Fundo escuro para as células */
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gridCell img,
+        .gridCell video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gridCell.dragover {
+            border: 1px dashed #7df9ff; /* Destaque ao arrastar */
+        }
+
+        .selectedCell {
+            border: 2px solid #7df9ff; /* Azul elétrico para célula selecionada */
+        }
+
+        /* Estilos para as barras de redimensionamento */
+        .resizer {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.2); /* Redimensionador claro */
+            z-index: 10;
+        }
+
+        .resizer.col-resizer {
+            width: 5px;
+            cursor: col-resize;
+        }
+
+        .resizer.row-resizer {
+            height: 5px;
+            cursor: row-resize;
+        }
+
+        #sideMenu h2 {
+            margin-top: 0;
+        }
+
+        #sideMenu label {
+            display: block;
+            margin-top: 15px;
+        }
+
+        #sideMenu input {
+            width: 100%;
+            padding: 5px;
+            margin-top: 5px;
+            box-sizing: border-box;
+            background-color: #2c3e50; /* Fundo escuro para inputs */
+            color: #ecf0f1; /* Texto claro */
+            border: 1px solid #34495e; /* Borda para definir o campo */
+            border-radius: 3px;
+        }
+
+        #createGrid {
+            margin-top: 20px;
+            padding: 10px;
+            width: 100%;
+            background-color: #3498db; /* Azul */
+            border: none;
+            color: #ecf0f1; /* Texto claro */
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        #createGrid:hover {
+            background-color: #2980b9; /* Azul mais escuro no hover */
+        }
+
+        /* Ocultar linhas do grid */
+        #gridContainer.hideGridLines .gridCell {
+            border: none;
+        }
+
+        /* Manter borda de seleção visível mesmo com linhas ocultas */
+        #gridContainer.hideGridLines .gridCell.selectedCell {
+            border: 2px solid #7df9ff; /* Azul elétrico */
+        }
+
+        /* Ocultar redimensionadores */
+        #gridContainer.hideResizers .resizer {
+            display: none;
+        }
+
+        /* Estilo para tela cheia */
+        .fullscreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2000; /* Z-index alto para sobreposição */
+        }
+
+        /* Estilos para o modal de atalhos */
+        .modal {
+            display: none; /* Oculto por padrão */
+            position: fixed;
+            z-index: 1500; /* Sobreposto ao conteúdo */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(26, 37, 47, 0.9); /* Fundo escuro com opacidade */
+        }
+        
+        .modal-content {
+            background-color: #1f2c38; /* Fundo escuro */
+            margin: 15% auto; /* Centralizado */
+            padding: 20px;
+            border: 1px solid #34495e; /* Borda cinza */
+            width: 80%;
+            max-width: 600px;
+            color: #ecf0f1; /* Texto claro */
+            border-radius: 5px;
+            position: relative;
+        }
+        
+        #closeModal {
+            color: #ecf0f1;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        #shortcutModal h2 {
+            margin-top: 0;
+        }
+        
+        #shortcutModal ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        #shortcutModal li {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <button id="menuToggle"><span></span></button>
+    <div id="sideMenu">
+        <h2>Controles do Grid</h2>
+        <label for="rows">Número de linhas:</label>
+        <input type="number" id="rows" min="1" value="4">
+        <label for="cols">Número de colunas:</label>
+        <input type="number" id="cols" min="1" value="4">
+        <button id="createGrid">Criar Grid</button>
+    </div>
+    <div id="content">
+        <div id="gridContainer"></div>
+    </div>
+    <div id="shortcutModal" class="modal">
+        <div class="modal-content">
+            <span id="closeModal">&times;</span>
+            <h2>Atalhos do Aplicativo</h2>
+            <ul>
+                <li><strong>Ctrl+M</strong>: Mostrar/Ocultar menu</li>
+                <li><strong>Ctrl+G</strong>: Mesclar/Desmesclar células</li>
+                <li><strong>Ctrl+F</strong>: Alternar tela cheia para a célula selecionada</li>
+                <li><strong>Ctrl+I</strong>: Ocultar/Exibir linhas do grid</li>
+                <li><strong>Ctrl+L</strong>: Ocultar/Exibir redimensionadores</li>
+            </ul>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            var colSizes = [];
+            var rowSizes = [];
+
+            $('#menuToggle').on('click', function() {
+                $('#sideMenu').toggleClass('open');
+            });
+
+            // Atalhos de teclado
+            $(document).on('keydown', function(e) {
+                if (e.ctrlKey) {
+                    if (e.key.toLowerCase() === 'm') {
+                        e.preventDefault();
+                        $('#sideMenu').toggleClass('open');
+                    } else if (e.key.toLowerCase() === 'g') {
+                        e.preventDefault();
+                        handleMergeUnmerge();
+                    } else if (e.key.toLowerCase() === 'f') {
+                        e.preventDefault();
+                        toggleFullScreen();
+                    } else if (e.key.toLowerCase() === 'i') {
+                        e.preventDefault();
+                        toggleGridLines();
+                    } else if (e.key.toLowerCase() === 'l') {
+                        e.preventDefault();
+                        toggleResizers();
+                    }
+                } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                    e.preventDefault();
+                    navigateCell(e.key);
+                }
+            });
+
+            $('#createGrid').on('click', function() {
+                var rows = parseInt($('#rows').val());
+                var cols = parseInt($('#cols').val());
+                createGrid(rows, cols);
+                $('#sideMenu').removeClass('open');
+            });
+
+            function createGrid(rows, cols) {
+                $('#gridContainer').empty();
+                colSizes = [];
+                rowSizes = [];
+
+                // Inicializar tamanhos das colunas e linhas
+                for (var i = 0; i < cols; i++) {
+                    colSizes.push(100 / cols);
+                }
+                for (var i = 0; i < rows; i++) {
+                    rowSizes.push(100 / rows);
+                }
+
+                updateGridTemplate();
+
+                // Criar células
+                for (var r = 0; r < rows; r++) {
+                    for (var c = 0; c < cols; c++) {
+                        var cell = $('<div class="gridCell"></div>');
+                        cell.css({
+                            'grid-row': r + 1,
+                            'grid-column': c + 1
+                        });
+
+                        // Seleção de célula
+                        cell.on('click', function(e) {
+                            if (e.ctrlKey) {
+                                $(this).toggleClass('selectedCell');
+                            } else {
+                                $('.gridCell').removeClass('selectedCell');
+                                $(this).addClass('selectedCell');
+                            }
+                        });
+
+                        // Eventos de drag-and-drop
+                        cell.on('dragenter dragover', function(e) {
+                            e.preventDefault();
+                            $(this).addClass('dragover');
+                        });
+
+                        cell.on('dragleave', function(e) {
+                            e.preventDefault();
+                            $(this).removeClass('dragover');
+                        });
+
+                        cell.on('drop', function(e) {
+                            e.preventDefault();
+                            $(this).removeClass('dragover');
+                            var cellElement = $(this);
+                            
+                            // Suporte para URLs
+                            var url = e.originalEvent.dataTransfer.getData('text/uri-list') || 
+                                      e.originalEvent.dataTransfer.getData('text/plain');
+                                      
+                            if (url && isValidUrl(url)) {
+                                var iframe = $('<iframe></iframe>');
+                                iframe.attr('src', url);
+                                iframe.css({
+                                    'width': '100%',
+                                    'height': '100%',
+                                    'border': 'none'
+                                });
+                                cellElement.empty().append(iframe);
+                                return;
+                            }
+
+                            // Suporte para arquivos
+                            var files = e.originalEvent.dataTransfer.files;
+                            if (files.length > 0) {
+                                var file = files[0];
+                                var fileURL = URL.createObjectURL(file);
+
+                                if (file.type.startsWith('image/')) {
+                                    var img = $('<img>');
+                                    img.attr('src', fileURL);
+                                    cellElement.empty().append(img);
+                                } else if (file.type.startsWith('video/')) {
+                                    var video = $('<video autoplay loop muted></video>');
+                                    video.attr('src', fileURL);
+                                    cellElement.empty().append(video);
+                                } else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+                                    var iframe = $('<iframe></iframe>');
+                                    iframe.attr('src', fileURL);
+                                    iframe.css({
+                                        'width': '100%',
+                                        'height': '100%',
+                                        'border': 'none'
+                                    });
+                                    cellElement.empty().append(iframe);
+                                } else if (file.type === 'text/html' || file.name.endsWith('.html') || file.name.endsWith('.htm')) {
+                                    var iframe = $('<iframe></iframe>');
+                                    iframe.attr('src', fileURL);
+                                    iframe.css({
+                                        'width': '100%',
+                                        'height': '100%',
+                                        'border': 'none'
+                                    });
+                                    cellElement.empty().append(iframe);
+                                } else {
+                                    alert('Por favor, arraste uma imagem, vídeo, PDF, arquivo HTML ou URL.');
+                                }
+                            }
+                        });
+
+                        $('#gridContainer').append(cell);
+                    }
+                }
+
+                // Adicionar redimensionadores de colunas
+                for (var i = 1; i < cols; i++) {
+                    var resizer = $('<div class="resizer col-resizer"></div>');
+                    resizer.css({
+                        'left': 'calc(' + getCumulativeSize(colSizes, i) + '% - 2.5px)',
+                        'top': '0',
+                        'bottom': '0'
+                    });
+                    attachColResizer(resizer, i);
+                    $('#gridContainer').append(resizer);
+                }
+
+                // Adicionar redimensionadores de linhas
+                for (var i = 1; i < rows; i++) {
+                    var resizer = $('<div class="resizer row-resizer"></div>');
+                    resizer.css({
+                        'top': 'calc(' + getCumulativeSize(rowSizes, i) + '% - 2.5px)',
+                        'left': '0',
+                        'right': '0'
+                    });
+                    attachRowResizer(resizer, i);
+                    $('#gridContainer').append(resizer);
+                }
+            }
+
+            function updateGridTemplate() {
+                $('#gridContainer').css({
+                    'grid-template-columns': colSizes.map(s => s + '%').join(' '),
+                    'grid-template-rows': rowSizes.map(s => s + '%').join(' ')
+                });
+            }
+
+            function getCumulativeSize(sizes, index) {
+                var sum = 0;
+                for (var i = 0; i < index; i++) {
+                    sum += sizes[i];
+                }
+                return sum;
+            }
+
+            function toggleResizers() {
+                $('#gridContainer').toggleClass('hideResizers');
+            }
+
+            function attachColResizer(resizer, index) {
+                var startX, startColSize, totalSize;
+
+                resizer.on('mousedown', function(e) {
+                    e.preventDefault();
+                    startX = e.pageX;
+                    startColSize = colSizes[index - 1];
+                    totalSize = colSizes.slice(index - 1).reduce(function(a, b) { return a + b; }, 0);
+
+                    $(document).on('mousemove.colResize', function(e) {
+                        var dx = e.pageX - startX;
+                        var deltaPercent = dx / $('#gridContainer').width() * 100;
+                        var newSize = startColSize + deltaPercent;
+
+                        if (newSize > 5 && newSize < totalSize - 5) {
+                            colSizes[index - 1] = newSize;
+                            var remainingSize = totalSize - newSize;
+                            var sizesRight = colSizes.slice(index);
+                            var sizesRightTotal = sizesRight.reduce(function(a, b) { return a + b; }, 0);
+
+                            for (var i = index; i < colSizes.length; i++) {
+                                colSizes[i] = (colSizes[i] / sizesRightTotal) * remainingSize;
+                            }
+
+                            updateGridTemplate();
+                            updateColResizers();
+                        }
+                    });
+                    $(document).on('mouseup.colResize', function() {
+                        $(document).off('.colResize');
+                    });
+                });
+            }
+
+            function attachRowResizer(resizer, index) {
+                var startY, startRowSize, totalSize;
+
+                resizer.on('mousedown', function(e) {
+                    e.preventDefault();
+                    startY = e.pageY;
+                    startRowSize = rowSizes[index - 1];
+                    totalSize = rowSizes.slice(index - 1).reduce(function(a, b) { return a + b; }, 0);
+
+                    $(document).on('mousemove.rowResize', function(e) {
+                        var dy = e.pageY - startY;
+                        var deltaPercent = dy / $('#gridContainer').height() * 100;
+                        var newSize = startRowSize + deltaPercent;
+
+                        if (newSize > 5 && newSize < totalSize - 5) {
+                            rowSizes[index - 1] = newSize;
+                            var remainingSize = totalSize - newSize;
+                            var sizesBelow = rowSizes.slice(index);
+                            var sizesBelowTotal = sizesBelow.reduce(function(a, b) { return a + b; }, 0);
+
+                            for (var i = index; i < rowSizes.length; i++) {
+                                rowSizes[i] = (rowSizes[i] / sizesBelowTotal) * remainingSize;
+                            }
+
+                            updateGridTemplate();
+                            updateRowResizers();
+                        }
+                    });
+                    $(document).on('mouseup.rowResize', function() {
+                        $(document).off('.rowResize');
+                    });
+                });
+            }
+
+            function updateColResizers() {
+                $('.col-resizer').each(function(i) {
+                    $(this).css('left', 'calc(' + getCumulativeSize(colSizes, i + 1) + '% - 2.5px)');
+                });
+            }
+
+            function updateRowResizers() {
+                $('.row-resizer').each(function(i) {
+                    $(this).css('top', 'calc(' + getCumulativeSize(rowSizes, i + 1) + '% - 2.5px)');
+                });
+            }
+
+            function handleMergeUnmerge() {
+                var selectedCells = $('.selectedCell');
+                if (selectedCells.length > 1) {
+                    mergeCells(selectedCells);
+                } else if (selectedCells.length === 1) {
+                    unmergeCell(selectedCells);
+                }
+            }
+
+            function mergeCells(selectedCells) {
+                if (!areCellsAdjacent(selectedCells)) {
+                    alert("As células selecionadas não são adjacentes.");
+                    return;
+                }
+
+                var rowStart = Infinity, rowEnd = -Infinity;
+                var colStart = Infinity, colEnd = -Infinity;
+
+                selectedCells.each(function() {
+                    var cell = $(this);
+                    var gridRow = cell.css('grid-row').split(' / ');
+                    var gridColumn = cell.css('grid-column').split(' / ');
+
+                    var rStart = parseInt(gridRow[0]);
+                    var rEnd = parseInt(gridRow[1]) || rStart;
+                    var cStart = parseInt(gridColumn[0]);
+                    var cEnd = parseInt(gridColumn[1]) || cStart;
+
+                    rowStart = Math.min(rowStart, rStart);
+                    rowEnd = Math.max(rowEnd, rEnd);
+                    colStart = Math.min(colStart, cStart);
+                    colEnd = Math.max(colEnd, cEnd);
+                });
+
+                var firstCell = $(selectedCells.get(0));
+                selectedCells.not(firstCell).remove();
+
+                firstCell.css({
+                    'grid-row': rowStart + ' / ' + (rowEnd + 1),
+                    'grid-column': colStart + ' / ' + (colEnd + 1)
+                });
+
+                firstCell.data('merged', true);
+                firstCell.removeClass('selectedCell');
+            }
+
+            function unmergeCell(selectedCell) {
+                var cell = selectedCell;
+                if (!cell.data('merged')) {
+                    return;
+                }
+
+                var gridRow = cell.css('grid-row').split(' / ');
+                var gridColumn = cell.css('grid-column').split(' / ');
+
+                var rowStart = parseInt(gridRow[0]);
+                var rowEnd = parseInt(gridRow[1]);
+                var colStart = parseInt(gridColumn[0]);
+                var colEnd = parseInt(gridColumn[1]);
+
+                for (var r = rowStart; r < rowEnd; r++) {
+                    for (var c = colStart; c < colEnd; c++) {
+                        if (r === rowStart && c === colStart) {
+                            cell.css({
+                                'grid-row': r + ' / ' + (r + 1),
+                                'grid-column': c + ' / ' + (c + 1)
+                            });
+                            cell.data('merged', false);
+                            cell.removeClass('selectedCell');
+                        } else {
+                            var newCell = $('<div class="gridCell"></div>');
+                            newCell.css({
+                                'grid-row': r + ' / ' + (r + 1),
+                                'grid-column': c + ' / ' + (c + 1)
+                            });
+                            newCell.on('click', function(e) {
+                                if (e.ctrlKey) {
+                                    $(this).toggleClass('selectedCell');
+                                } else {
+                                    $('.gridCell').removeClass('selectedCell');
+                                    $(this).addClass('selectedCell');
+                                }
+                            });
+                            $('#gridContainer').append(newCell);
+                        }
+                    }
+                }
+                cell.removeClass('selectedCell');
+            }
+
+            function areCellsAdjacent(cells) {
+                var rows = [];
+                var cols = [];
+
+                cells.each(function() {
+                    var cell = $(this);
+                    var gridRow = cell.css('grid-row').split(' / ');
+                    var gridColumn = cell.css('grid-column').split(' / ');
+
+                    var rStart = parseInt(gridRow[0]);
+                    var cStart = parseInt(gridColumn[0]);
+
+                    rows.push(rStart);
+                    cols.push(cStart);
+                });
+
+                rows.sort(function(a, b) { return a - b; });
+                cols.sort(function(a, b) { return a - b; });
+
+                var rowSpan = rows[rows.length - 1] - rows[0] + 1;
+                var colSpan = cols[cols.length - 1] - cols[0] + 1;
+
+                return cells.length === rowSpan * colSpan;
+            }
+
+            function toggleFullScreen() {
+                var selectedCell = $('.selectedCell');
+                if (selectedCell.length === 0) {
+                    alert('Por favor, selecione uma célula para maximizar.');
+                    return;
+                }
+
+                if (selectedCell.hasClass('fullscreen')) {
+                    selectedCell.removeClass('fullscreen');
+                    $('#gridContainer .gridCell').show();
+                    $('#sideMenu').show();
+                    $('#menuToggle').show();
+                } else {
+                    $('#gridContainer .gridCell').not(selectedCell).hide();
+                    selectedCell.addClass('fullscreen');
+                    $('#sideMenu').hide();
+                    $('#menuToggle').hide();
+                }
+            }
+
+            function toggleGridLines() {
+                $('#gridContainer').toggleClass('hideGridLines');
+            }
+
+            function navigateCell(direction) {
+                var selectedCell = $('.gridCell.selectedCell');
+
+                if (selectedCell.length === 0) {
+                    $('.gridCell').first().addClass('selectedCell');
+                    return;
+                }
+
+                var currentCell = selectedCell.first();
+                var gridRow = currentCell.css('grid-row').split(' / ');
+                var gridColumn = currentCell.css('grid-column').split(' / ');
+
+                var rowStart = parseInt(gridRow[0]);
+                var colStart = parseInt(gridColumn[0]);
+
+                var newRow = rowStart;
+                var newCol = colStart;
+
+                if (direction === 'ArrowUp') {
+                    newRow = rowStart - 1;
+                } else if (direction === 'ArrowDown') {
+                    newRow = rowStart + 1;
+                } else if (direction === 'ArrowLeft') {
+                    newCol = colStart - 1;
+                } else if (direction === 'ArrowRight') {
+                    newCol = colStart + 1;
+                }
+
+                var targetCell = $('.gridCell').filter(function() {
+                    var cell = $(this);
+                    var cellRow = cell.css('grid-row').split(' / ');
+                    var cellCol = cell.css('grid-column').split(' / ');
+                    var cellRowStart = parseInt(cellRow[0]);
+                    var cellColStart = parseInt(cellCol[0]);
+
+                    return cellRowStart === newRow && cellColStart === newCol;
+                }).first();
+
+                if (targetCell.length > 0) {
+                    $('.gridCell').removeClass('selectedCell');
+                    targetCell.addClass('selectedCell');
+                }
+            }
+
+            // Fechar modal de atalhos
+            $('#closeModal').on('click', function() {
+                $('#shortcutModal').fadeOut();
+            });
+
+            $(window).on('click', function(event) {
+                if ($(event.target).is('#shortcutModal')) {
+                    $('#shortcutModal').fadeOut();
+                }
+            });
+
+            // Função auxiliar para validar URLs
+            function isValidUrl(string) {
+                try {
+                    new URL(string);
+                    return true;
+                } catch (_) {
+                    return false;
+                }
+            }
+
+            // Inicializar o grid com valores padrão
+            createGrid(4, 4);
+        });
+    </script>
+</body>
+</html>

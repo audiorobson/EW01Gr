@@ -1,0 +1,9 @@
+body::-webkit-scrollbar, .modal::-webkit-scrollbar, .monitor-grid::-webkit-scrollbar, .schedule-list::-webkit-scrollbar, .preset-list::-webkit-scrollbar {
+    width: 3px;
+    height: 3px;
+    background: #1e1e1e;
+  }
+  body::-webkit-scrollbar-thumb, .modal::-webkit-scrollbar-thumb, .monitor-grid::-webkit-scrollbar-thumb, .schedule-list::-webkit-scrollbar-thumb, .preset-list::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 3px;
+  }
